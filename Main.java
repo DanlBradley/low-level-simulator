@@ -21,7 +21,7 @@ public class Main {
             //some example code
 
             //Second pass: actually encode I suppose
-            SimpleAssembler.assemble(currentLocation, lineOfCode);
+            Encoder.assemble(currentLocation, lineOfCode);
 
         }
 
