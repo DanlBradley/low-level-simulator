@@ -1,224 +1,239 @@
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class Encoder {
 
-    //Holds opcodes for all instructions as (instruction, opcode in octal).
-    private static List<Opcode> opcodes;
-    //Hashmap lookup table to find opcodes in O(1) time.
-    private static Map<String, Opcode> opcodeMap;
-
-    enum InstructionFormat {
-        MISC,
-        LOAD_STORE,
-        REGISTER_REG,
-        SHIFT_ROTATE,
-        IO,
-        IMMEDIATE
-    }
+    // Opcode lookup table for O(1) opcode value retrieval
+    private static Map<String, Integer> opcodeMap;
 
     static {
-        opcodes = new ArrayList<>();
+        opcodeMap = new HashMap<>();
 
-        opcodes.add(new Opcode("HLT", 0, InstructionFormat.MISC));
-        opcodes.add(new Opcode("TRAP", 30, InstructionFormat.MISC));
+        // Miscellaneous Instructions (pp. 6 of C6461 Spec)
+        opcodeMap.put("HLT", 0);
+        opcodeMap.put("TRAP", 30);
 
         // Load/Store Instructions (pp. 8 of C6461 Spec)
-        opcodes.add(new Opcode("LDR", 1, InstructionFormat.LOAD_STORE));
-        opcodes.add(new Opcode("STR", 2, InstructionFormat.LOAD_STORE));
-        opcodes.add(new Opcode("LDA", 3, InstructionFormat.LOAD_STORE));
-        opcodes.add(new Opcode("LDX", 41, InstructionFormat.LOAD_STORE));
-        opcodes.add(new Opcode("STX", 42, InstructionFormat.LOAD_STORE));
+        opcodeMap.put("LDR", 1);
+        opcodeMap.put("STR", 2);
+        opcodeMap.put("LDA", 3);
+        opcodeMap.put("LDX", 41);
+        opcodeMap.put("STX", 42);
 
         // Transfer Instructions (pp. 9 of C6461 Spec)
-        opcodes.add(new Opcode("JZ", 10, InstructionFormat.LOAD_STORE));
-        opcodes.add(new Opcode("JNE", 11, InstructionFormat.LOAD_STORE));
-        opcodes.add(new Opcode("JCC", 12, InstructionFormat.LOAD_STORE));
-        opcodes.add(new Opcode("JMA", 13, InstructionFormat.LOAD_STORE));
-        opcodes.add(new Opcode("JSR", 14, InstructionFormat.LOAD_STORE));
-        opcodes.add(new Opcode("RFS", 15, InstructionFormat.LOAD_STORE));
-        opcodes.add(new Opcode("SOB", 16, InstructionFormat.LOAD_STORE));
-        opcodes.add(new Opcode("JGE", 17, InstructionFormat.LOAD_STORE));
+        opcodeMap.put("JZ", 10);
+        opcodeMap.put("JNE", 11);
+        opcodeMap.put("JCC", 12);
+        opcodeMap.put("JMA", 13);
+        opcodeMap.put("JSR", 14);
+        opcodeMap.put("RFS", 15);
+        opcodeMap.put("SOB", 16);
+        opcodeMap.put("JGE", 17);
 
         // Arithmetic and logical instructions (pp. 10 of C6461 Spec)
-        opcodes.add(new Opcode("AMR", 4, InstructionFormat.LOAD_STORE));
-        opcodes.add(new Opcode("SMR", 5, InstructionFormat.LOAD_STORE));
-        opcodes.add(new Opcode("AIR", 6, InstructionFormat.IMMEDIATE));
-        opcodes.add(new Opcode("SIR", 7, InstructionFormat.IMMEDIATE));
+        opcodeMap.put("AMR", 4);
+        opcodeMap.put("SMR", 5);
+        opcodeMap.put("AIR", 6);
+        opcodeMap.put("SIR", 7);
 
         // Register to Register Operations (pp. 11 of C6461 Spec)
-        opcodes.add(new Opcode("MLT", 70, InstructionFormat.REGISTER_REG));
-        opcodes.add(new Opcode("DVD", 71, InstructionFormat.REGISTER_REG));
-        opcodes.add(new Opcode("TRR", 72, InstructionFormat.REGISTER_REG));
-        opcodes.add(new Opcode("AND", 73, InstructionFormat.REGISTER_REG));
-        opcodes.add(new Opcode("ORR", 74, InstructionFormat.REGISTER_REG));
-        opcodes.add(new Opcode("NOT", 75, InstructionFormat.REGISTER_REG));
+        opcodeMap.put("MLT", 70);
+        opcodeMap.put("DVD", 71);
+        opcodeMap.put("TRR", 72);
+        opcodeMap.put("AND", 73);
+        opcodeMap.put("ORR", 74);
+        opcodeMap.put("NOT", 75);
 
         // Shift/rotate Instructions (pp. 12 of C6461 Spec)
-        opcodes.add(new Opcode("SRC", 31, InstructionFormat.SHIFT_ROTATE));
-        opcodes.add(new Opcode("RRC", 32, InstructionFormat.SHIFT_ROTATE));
+        opcodeMap.put("SRC", 31);
+        opcodeMap.put("RRC", 32);
 
         // IO Operations (pp. 13 of C6461 Spec)
-        opcodes.add(new Opcode("IN", 61, InstructionFormat.IO));
-        opcodes.add(new Opcode("OUT", 62, InstructionFormat.IO));
-        opcodes.add(new Opcode("CHK", 63, InstructionFormat.IO));
-
-        opcodeMap = new HashMap<>();
-        for (Opcode opcode : opcodes) {
-            opcodeMap.put(opcode.instruction, opcode);
-        }
+        opcodeMap.put("IN", 61);
+        opcodeMap.put("OUT", 62);
+        opcodeMap.put("CHK", 63);
     }
 
-    //Basic class that holds opcode specifications.
-    private static class Opcode {
-        String instruction;
-        int opcode;
-        InstructionFormat format;
+//    public static void main(String[] args) {
+//        testEncoder(args);
+//    }
 
-        public Opcode(String instruction, int opcode, InstructionFormat format) {
-            this.instruction = instruction;
-            this.opcode = opcode;
-            this.format = format;
-        }
-    }
-
-    /*
-    Holds instruction data for all opcodes (whether needed or not). For example not all opcodes use
-    an indirect (like AIR). But it's available if needed. IDK how yet to implement nullable.
-    */
-    private static class Instruction {
-        String instruction;
-        int register;
-        int index;
-        int indirect;
-        int address;
-
-        public Instruction(String opcode, int register, int index,
-                           int indirect, int address) {
-            this.instruction = opcode;
-            this.register = register;
-            this.index = index;
-            this.indirect = indirect;
-            this.address = address;
-        }
-    }
-
-    public static void main(String[] args) {
-        /*
-        Right now this just assembles using predefined address location. The file goes like:
-        1    LOC 6       ;BEGIN AT LOCATION 6
-        2    Data 10     ;PUT 10 AT LOCATION 6
-        3    Data 3      ;PUT 3 AT LOCATION 7
-        4    Data End    ;PUT 1024 AT LOCATION 8
-        5    Data 0
-        6    Data 12
-        7    Data 9
-        8    Data 18
-        9    Data 12
-        10   LDX 2,7     ;X2 GETS 3
-
-         So the LDX doesn't happen until line 10. We need a way to break those out.
-         */
-        String result = assemble(20, "LDR 2,1,8");
-        System.out.println(result);
-    }
-
-    public static String assemble(int location, String instructionLine) {
-        Instruction inst = parseInstruction(instructionLine);
+    /**
+     *  Right now this just assembles using predefined address location. The file goes like:
+     *  1    LOC 6       ;BEGIN AT LOCATION 6
+     *  2    Data 10     ;PUT 10 AT LOCATION 6
+     *  3    Data 3      ;PUT 3 AT LOCATION 7
+     *  4    Data End    ;PUT 1024 AT LOCATION 8
+     *  5    Data 0
+     *  6    Data 12
+     *  7    Data 9
+     *  8    Data 18
+     *  9    Data 12
+     *  10   LDX 2,7     ;X2 GETS 3
+     * @param location Current location in memory.
+     * @param instructionLine The instruction to encode.
+     * @return Encded instruction in octal format.
+     */
+    public static String encodeInstruction(int location, String instructionLine) {
         String locationOctal = convertToOctal(location, 6);
-        String instructionOctal = generateInstruction(inst);
+        String instructionOctal = parseInstruction(instructionLine);
 
         return locationOctal + " " + instructionOctal + " " + instructionLine;
     }
 
+    /**
+     * Parses the instruction line and directly packs it into 16-bit instruction format. This should ONLY parse
+     * Operation Codes - not system directives or labels.
+     * @param line A string representing one line from the source file.
+     * @return The packed instruction in octal format.
+     */
+    private static String parseInstruction(String line) {
 
-    private static Instruction parseInstruction(String line) {
-        //remove comments and split
-        if (line.contains(";")) {line = line.substring(0, line.indexOf(";"));}
-        String[] parts = line.trim().split("[ ,]+");
-        String opcode = parts[0];
-
-        Opcode opcodeInfo = opcodeMap.get(opcode);
-        if (opcodeInfo == null) {
-            throw new RuntimeException("Unknown instruction: " + opcode);
+        // remove comments - not needed
+        if (line.contains(";")) {
+            line = line.substring(0, line.indexOf(";"));
         }
 
-        switch (opcodeInfo.format) {
-            case MISC:
-                if (opcode.equals("TRAP")) {
-                    int trapCode = Integer.parseInt(parts[1]);
-                    return new Instruction(opcode, 0, 0, 0, trapCode);
-                }
-                return new Instruction(opcode, 0, 0, 0, 0);
+        // Handle labels - not part of instruction (since encode method expects a decimal location)
+        String instructionPart = line;
+        if (line.contains(":")) {
+            instructionPart = line.substring(line.indexOf(":") + 1).trim();
 
-            case LOAD_STORE:
+            // Labels with no instructions are not allowed
+            if (instructionPart.isEmpty()) {
+                throw new IllegalArgumentException("Label-only line passed to encoder: " + line.trim());
+            }
+        }
+
+        // Don't put directives in the encoder!
+        if (instructionPart.startsWith("LOC") ||  instructionPart.startsWith("Data")) {
+            throw new IllegalArgumentException("Assembler directive passed to encoder: " + line.trim());
+        }
+
+        String[] parts = instructionPart.trim().split("[ ,]+");
+        String opcode = parts[0];
+
+        Integer opcodeValue = opcodeMap.get(opcode);
+        if (opcodeValue == null) {
+            throw new RuntimeException("Unknown opcode: " + opcode);
+        }
+
+        //Packed instruction starts at 0000 0000 0000 0000 (all bits zero)
+        int instruction = 0;
+        instruction |= (opcodeValue & 0x3F) << 10; // Opcode bits 15-10
+
+        switch (opcode) {
+            // === MISCELLANEOUS INSTRUCTIONS ===
+            case "HLT":
+                // Format: |Opcode(6)|unused(10)|
+                // No additional bits to set
+                break;
+
+            case "TRAP":
+                // Format: |Opcode(6)|unused(6)|TrapCode(4)|
+                int trapCode = Integer.parseInt(parts[1]);
+                instruction |= (trapCode & 0xF); // TrapCode bits 3-0
+                break;
+
+            // === STANDARD LOAD/STORE INSTRUCTIONS ===
+            case "LDR": case "STR": case "LDA":
+            case "JZ": case "JNE": case "JCC": case "JMA": case "JSR": case "SOB": case "JGE":
+            case "AMR": case "SMR":
+                // Format: |Opcode(6)|R(2)|IX(2)|I(1)|Address(5)|
                 int register = Integer.parseInt(parts[1]);
                 int index = Integer.parseInt(parts[2]);
                 int address = Integer.parseInt(parts[3]);
                 int indirect = (parts.length > 4 && parts[4].equals("1")) ? 1 : 0;
-                return new Instruction(opcode, register, index, indirect, address);
 
-            case IMMEDIATE, IO:
-                return new Instruction(opcode,
-                        Integer.parseInt(parts[1]),
-                        0,
-                        0,
-                        Integer.parseInt(parts[2]));
+                instruction |= (register & 0x3) << 8;    // R bits 9-8
+                instruction |= (index & 0x3) << 6;       // IX bits 7-6
+                instruction |= (indirect & 0x1) << 5;    // I bit 5
+                instruction |= (address & 0x1F);         // Address bits 4-0
+                break;
 
-            case REGISTER_REG:
-                return new Instruction(opcode,
-                        Integer.parseInt(parts[1]),
-                        Integer.parseInt(parts[2]),
-                        0, 0);
+            // === INDEX REGISTER LOAD/STORE ===
+            case "LDX": case "STX":
+                // Format: |Opcode(6)|IX(2)|unused(2)|I(1)|Address(5)|
+                int indexReg = Integer.parseInt(parts[1]);
+                int addr = Integer.parseInt(parts[2]);
+                int ind = (parts.length > 3 && parts[3].equals("1")) ? 1 : 0;
 
-            case SHIFT_ROTATE:
+                instruction |= (indexReg & 0x3) << 8;    // IX bits 9-8
+                instruction |= (ind & 0x1) << 5;         // I bit 5
+                instruction |= (addr & 0x1F);            // Address bits 4-0
+                break;
+
+            // === SPECIAL TRANSFER INSTRUCTIONS ===
+            case "RFS":
+                // Format: |Opcode(6)|unused(2)|IX(2)|I(1)|Address(5)|
+                int returnCode = (parts.length > 1) ? Integer.parseInt(parts[1]) : 0;
+                instruction |= (returnCode & 0x1F);      // Address bits 4-0
+                break;
+
+            // === IMMEDIATE INSTRUCTIONS ===
+            case "AIR": case "SIR":
+                // Format: |Opcode(6)|R(2)|unused(3)|Immediate(5)|
                 int reg = Integer.parseInt(parts[1]);
+                int immediate = Integer.parseInt(parts[2]);
+
+                instruction |= (reg & 0x3) << 8;         // R bits 9-8
+                instruction |= (immediate & 0x1F);       // Immediate bits 4-0
+                break;
+
+            // === REGISTER-TO-REGISTER OPERATIONS ===
+            case "MLT": case "DVD": case "TRR": case "AND": case "ORR":
+                // Format: |Opcode(6)|Rx(2)|Ry(2)|unused(6)|
+                int rx = Integer.parseInt(parts[1]);
+                int ry = Integer.parseInt(parts[2]);
+
+                instruction |= (rx & 0x3) << 8;          // Rx bits 9-8
+                instruction |= (ry & 0x3) << 6;          // Ry bits 7-6
+                break;
+
+            case "NOT":
+                // Format: |Opcode(6)|Rx(2)|unused(8)|
+                int regx = Integer.parseInt(parts[1]);
+                instruction |= (regx & 0x3) << 8;        // Rx bits 9-8
+                break;
+
+            // === SHIFT/ROTATE OPERATIONS ===
+            case "SRC": case "RRC":
+                // Format: |Opcode(6)|R(2)|Count(4)|L/R(1)|A/L(1)|unused(2)|
+                int r = Integer.parseInt(parts[1]);
                 int count = Integer.parseInt(parts[2]);
                 int lr = Integer.parseInt(parts[3]);
                 int al = Integer.parseInt(parts[4]);
-                return new Instruction(opcode, reg, count, lr, al);
+
+                instruction |= (r & 0x3) << 8;           // R bits 9-8
+                instruction |= (count & 0xF) << 4;       // Count bits 7-4
+                instruction |= (lr & 0x1) << 3;          // L/R bit 3
+                instruction |= (al & 0x1) << 2;          // A/L bit 2
+                break;
+
+            // === I/O OPERATIONS ===
+            case "IN": case "OUT": case "CHK":
+                // Format: |Opcode(6)|R(2)|unused(3)|DeviceID(5)|
+                int ioReg = Integer.parseInt(parts[1]);
+                int deviceId = Integer.parseInt(parts[2]);
+
+                instruction |= (ioReg & 0x3) << 8;       // R bits 9-8
+                instruction |= (deviceId & 0x1F);        // DeviceID bits 4-0
+                break;
 
             default:
-                throw new RuntimeException("Unhandled instruction format: " + opcodeInfo.format);
+                throw new RuntimeException("Unknown instruction: " + opcode);
         }
-    }
-
-    /**
-     * Pack into 16-bit instruction format:
-     * |Opcode(6)|R(2)|IX(2)|I(1)|Address(5)|
-     * @inst The instruction to pack
-     */
-    private static String generateInstruction(Instruction inst) {
-        // Get opcode from map
-        int opcodeValue = opcodeMap.get(inst.instruction).opcode;
-
-        //start at 0000 0000 0000 0000 (all bits zero)
-        int instruction = 0;
-
-        // opcode occupies bits 15-10 (the & 0x3 means drop everything but bottom 6 bits, then shift by 10)
-        instruction |= (opcodeValue & 0x3F) << 10;
-
-        // register occupies bits 9-8 (0x3 means drop everything but bottom 2 bits, then shift by 8)
-        instruction |= (inst.register & 0x3) << 8;
-
-        // index occupies bits 7-8 (0x3 means drop everything but bottom 2 bits, then shift by 8)
-        instruction |= (inst.index & 0x3) << 6;
-
-        // indirect occupies bit 5 (0x1 means drop everything but bottom 1 bit, then shift by 5)
-        instruction |= (inst.indirect & 0x1) << 5;
-
-        // address occupies bits 4-0 (0x1F means drop everything but bottom 5 bits, no shift)
-        instruction |= (inst.address & 0x1F);
 
         // Convert to 6-digit octal
         return convertToOctal(instruction, 6);
     }
 
-    /*
-    Utility function that takes in a decimal value and converts to Octal, padded with the
-    correct number of leading zeros.
+    /**
+     * Utility function that takes in a decimal value and converts to Octal, padded with the
+     * correct number of leading zeros.
+     * @param value Decimal value to convert
+     * @param digits Number of digits to pad with leading zeros
+     * @return Octal representation of the decimal value
      */
     public static String convertToOctal(int value, int digits) {
         String octal = Integer.toOctalString(value);
@@ -227,5 +242,18 @@ public class Encoder {
         while (octal.length() < digits) {octal = "0" + octal;}
 
         return octal;
+    }
+
+    /**
+     * Runs a simple test to ensure encoder is producing correct listing output file per C6461 pp. 20
+     * @param args
+     */
+    public static void testEncoder(String[] args) {
+        System.out.println(encodeInstruction(20, "LDX 2,7;X2 GETS 3"));
+        System.out.println(encodeInstruction(20, "MyLabel: LDR 2,2,10"));
+        //System directive example: Should produce error
+        //System.out.println(encodeInstruction(20, "Data 9 ;PUT 9 AT LOCATION 2"));
+        System.out.println(encodeInstruction(20, "LDR 1,2,10,1 ;R1 GETS 18"));
+        System.out.println(encodeInstruction(20, "End: HLT ;STOP"));
     }
 }
