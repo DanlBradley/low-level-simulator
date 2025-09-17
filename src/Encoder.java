@@ -1,3 +1,5 @@
+package src;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -109,7 +111,7 @@ public class Encoder {
 
         // Don't put directives in the encoder!
         if (instructionPart.startsWith("LOC") ||  instructionPart.startsWith("Data")) {
-            throw new IllegalArgumentException("Assembler directive passed to encoder: " + line.trim());
+            throw new IllegalArgumentException("src.main.java.Assembler directive passed to encoder: " + line.trim());
         }
 
         String[] parts = instructionPart.trim().split("[ ,]+");
