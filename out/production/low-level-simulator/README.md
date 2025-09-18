@@ -1,33 +1,24 @@
 # low-level-simulator
 Repo for the CSCI 6461 Computer System Architecture Project F25 - Team 6
 
-## C6461 src.main.java.Assembler - Part 0
+## C6461 src.Assembler - Part 0
 
 ## Overview
-This is the assembler component for the C6461 Computer Architecture project. The assembler translates human-readable assembly language into machine code that can be executed by the C6461 simulator.
+This is the assembler component for the C6461 Computer Architecture project. The assembler translates human-readable 
+assembly language into machine code that can be executed by the C6461 simulator.
 
-## What the src.main.java.Assembler Does
-**Input:** Assembly language source file (.asm)
-**Output:**
-- Listing file (.lst) - Shows addresses, machine code, and original source
-- Load file (.load) - Contains address/instruction pairs for loading into simulator
+## Quick Start
+This project includes a runnable JAR file contained in the `build` directory. To run, the user must include an input 
+file as well as an output file. Test files have been provided in the `data` directory following the C6461 ISA 
+documentation. 
 
-## Example
-**Input:**
+To run the assembler, execute the following command from the root directory:
 ```
-LOC 6
-LDR 3,0,15
+java -jar build/low-level-simulator.jar data/assembly.txt data/listing.txt data/load.txt
 ```
 
-**Output (Listing file):**
-```
-000006 003417 LDR 3,0,15
-```
+In addition, the `data/output_expected.txt` file contains the expected output file from C6461 doc pp. 20.
 
-**Output (Load file):**
-```
-000006 003417
-```
 
 ## Instruction Set - All Opcodes
 

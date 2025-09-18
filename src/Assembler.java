@@ -167,7 +167,6 @@ public class Assembler {
             return handleLOC(instructionPart, line);
         }
         if (instructionPart.startsWith("Data")) {
-            currentLoc++;
             return handleData(instructionPart, line);
         }
 
@@ -226,6 +225,7 @@ public class Assembler {
 
         String locationOctal = Encoder.convertToOctal(currentLoc, 6);
         String dataOctal = Encoder.convertToOctal(dataValue, 6);
+        currentLoc++;
 
         String listingLine = locationOctal + " " + dataOctal + " " + originalLine;
         String loadLine = locationOctal + " " + dataOctal;
