@@ -4,7 +4,7 @@
 //    This is the 2-pass assembler. It loops thru and also calls the "SimpleAssembler" class.
 //    I should have called the assembler something else since it just encodes. So like encoder.
 //     */
-//    public static string[] Assembler(String[] args) {
+//    public static string[] src.main.java.Assembler(String[] args) {
 //        // 1. Get input sourceCode as a string[] from the readFile method (doesn't exist yet, use fake example)
 //        string[] sourceCodeExample = {
 //                "LOC 6 ;BEGIN AT LOCATION 6",
@@ -21,7 +21,7 @@
 //            //some example code
 //
 //            //Second pass: actually encode I suppose
-//            Encoder.encodeInstruction(currentLocation, lineOfCode);
+//            src.main.java.Encoder.encodeInstruction(currentLocation, lineOfCode);
 //
 //        }
 //
