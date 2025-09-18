@@ -45,7 +45,7 @@ public class Assembler {
                                 String listingFile,
                                 String loadFile) throws IOException {
         // Read all lines from input file
-        List<String> inputLines = readAllLines(assemblyFile);
+        List<String> inputLines = FileIO.readSourceFile(assemblyFile);
 
         // first pass - build the labels (for ex. a label might be referenced before it is defined)
         buildLabels(inputLines);
@@ -67,27 +67,8 @@ public class Assembler {
             }
         }
 
-        writeAllLines(listingFile, listingOutput);
-        writeAllLines(loadFile, loadOutput);
-    }
-
-    private static List<String> readAllLines(String filename) throws IOException {
-        List<String> lines = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                lines.add(line);
-            }
-        }
-        return lines;
-    }
-
-    private static void writeAllLines(String filename, List<String> lines) throws IOException {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
-            for (String line : lines) {
-                writer.println(line);
-            }
-        }
+        FileIO.writeFile(listingFile, listingOutput);
+        FileIO.writeFile(loadFile, loadOutput);
     }
 
     private static void buildLabels(List<String> inputLines) {
