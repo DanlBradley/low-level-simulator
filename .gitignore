@@ -25,3 +25,5 @@ replay_pid*
 
 # for IntelliJ IDEA
 .idea/
+
+# Ignore OUT and meta inf from intellij
