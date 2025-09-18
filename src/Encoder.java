@@ -76,11 +76,18 @@ public class Encoder {
      * @param instructionLine The instruction to encode.
      * @return Encded instruction in octal format.
      */
-    public static String encodeInstruction(int location, String instructionLine) {
+    public static String encodeInstruction(int location,
+                                           String instructionLine,
+                                           boolean isLoadFile) {
         String locationOctal = convertToOctal(location, 6);
         String instructionOctal = parseInstruction(instructionLine);
 
-        return locationOctal + " " + instructionOctal + " " + instructionLine;
+        if (!isLoadFile) {
+            return locationOctal + " " + instructionOctal + " " + instructionLine;
+        } else {
+            return locationOctal + " " + instructionOctal;
+        }
+
     }
 
     /**
@@ -260,18 +267,5 @@ public class Encoder {
         while (octal.length() < digits) {octal = "0" + octal;}
 
         return octal;
-    }
-
-    /**
-     * Runs a simple test to ensure encoder is producing correct listing output file per C6461 pp. 20
-     * @param args
-     */
-    public static void testEncoder(String[] args) {
-        System.out.println(encodeInstruction(20, "LDX 2,7;X2 GETS 3"));
-        System.out.println(encodeInstruction(20, "MyLabel: LDR 2,2,10"));
-        //System directive example: Should produce error
-        //System.out.println(encodeInstruction(20, "Data 9 ;PUT 9 AT LOCATION 2"));
-        System.out.println(encodeInstruction(20, "LDR 1,2,10,1 ;R1 GETS 18"));
-        System.out.println(encodeInstruction(20, "End: HLT ;STOP"));
     }
 }
