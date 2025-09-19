@@ -86,8 +86,7 @@ public class Encoder {
     /**
      * Parses the instruction line and directly packs it into 16-bit instruction format. This should ONLY parse
      * Operation Codes - not system directives or labels.
-     * Note that ISA doc C6461 uses little-endian numbering, while Java bit operations use
-     * right-to-left numbering.
+     * Note that ISA doc C6461 uses left-to-right order for the opcode, while the assembler uses right-to-left.
      * @param line A string representing one line from the source file.
      * @return The packed instruction in octal format.
      */
@@ -134,7 +133,7 @@ public class Encoder {
                 break;
 
             case "TRAP":
-                // Format: |0-5 Opcode|6-11 unused|12-15 TrapCode|
+                // Format: |0-5 Opcode|6-11 unused|12-15 Trap Code|
                 int trapCode = Integer.parseInt(parts[1]);
                 instruction |= (trapCode & 0xF); // TrapCode bits 12-15
                 break;
@@ -150,10 +149,10 @@ public class Encoder {
                 int address = Integer.parseInt(parts[3]);
                 int indirect = (parts.length > 4 && parts[4].equals("1")) ? 1 : 0;
 
-                instruction |= (register & 0x3) << 8;    // R bits 9-8
-                instruction |= (index & 0x3) << 6;       // IX bits 7-6
-                instruction |= (indirect & 0x1) << 5;    // I bit 5
-                instruction |= (address & 0x1F);         // Address bits 4-0
+                instruction |= (register & 0x3) << 8;    // R/cc bits 6-7 (15 - 8 = 7)
+                instruction |= (index & 0x3) << 6;       // IX bits 8-9 (15 - 6 = 9)
+                instruction |= (indirect & 0x1) << 5;    // I bit 10 (15 - 5 = 10)
+                instruction |= (address & 0x1F);         // Address bits 11-15
                 break;
 
             // === SPECIAL TRANSFER INSTRUCTIONS ===
