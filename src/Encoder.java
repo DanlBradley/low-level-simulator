@@ -11,49 +11,42 @@ public class Encoder {
     static {
         opcodeMap = new HashMap<>();
 
-        // Miscellaneous Instructions (pp. 6 of C6461 Spec)
         opcodeMap.put("HLT", 0);
-        opcodeMap.put("TRAP", 30);
+        opcodeMap.put("TRAP", 24);
 
-        // Load/Store Instructions (pp. 8 of C6461 Spec)
         opcodeMap.put("LDR", 1);
         opcodeMap.put("STR", 2);
         opcodeMap.put("LDA", 3);
-        opcodeMap.put("LDX", 41);
-        opcodeMap.put("STX", 42);
+        opcodeMap.put("LDX", 33);
+        opcodeMap.put("STX", 34);
 
-        // Transfer Instructions (pp. 9 of C6461 Spec)
-        opcodeMap.put("JZ", 10);
-        opcodeMap.put("JNE", 11);
-        opcodeMap.put("JCC", 12);
-        opcodeMap.put("JMA", 13);
-        opcodeMap.put("JSR", 14);
-        opcodeMap.put("RFS", 15);
-        opcodeMap.put("SOB", 16);
-        opcodeMap.put("JGE", 17);
+        opcodeMap.put("JZ", 8);
+        opcodeMap.put("JNE", 9);
+        opcodeMap.put("JCC", 10);
+        opcodeMap.put("JMA", 11);
+        opcodeMap.put("JSR", 12);
+        opcodeMap.put("RFS", 13);
+        opcodeMap.put("SOB", 14);
+        opcodeMap.put("JGE", 15);
 
-        // Arithmetic and logical instructions (pp. 10 of C6461 Spec)
         opcodeMap.put("AMR", 4);
         opcodeMap.put("SMR", 5);
         opcodeMap.put("AIR", 6);
         opcodeMap.put("SIR", 7);
 
-        // Register to Register Operations (pp. 11 of C6461 Spec)
-        opcodeMap.put("MLT", 70);
-        opcodeMap.put("DVD", 71);
-        opcodeMap.put("TRR", 72);
-        opcodeMap.put("AND", 73);
-        opcodeMap.put("ORR", 74);
-        opcodeMap.put("NOT", 75);
+        opcodeMap.put("MLT", 56);
+        opcodeMap.put("DVD", 57);
+        opcodeMap.put("TRR", 58);
+        opcodeMap.put("AND", 59);
+        opcodeMap.put("ORR", 60);
+        opcodeMap.put("NOT", 61);
 
-        // Shift/rotate Instructions (pp. 12 of C6461 Spec)
-        opcodeMap.put("SRC", 31);
-        opcodeMap.put("RRC", 32);
+        opcodeMap.put("SRC", 25);
+        opcodeMap.put("RRC", 26);
 
-        // IO Operations (pp. 13 of C6461 Spec)
-        opcodeMap.put("IN", 61);
-        opcodeMap.put("OUT", 62);
-        opcodeMap.put("CHK", 63);
+        opcodeMap.put("IN", 49);
+        opcodeMap.put("OUT", 50);
+        opcodeMap.put("CHK", 51);
     }
 
 //    public static void main(String[] args) {
@@ -150,16 +143,17 @@ public class Encoder {
             case "LDR": case "STR": case "LDA": //LD/STR
             case "JZ": case "JNE": case "JCC": case "SOB": case "JGE": //Transfer
             case "AMR": case "SMR": //Arithmetic and logical
+
                 // Format: |0-5 Opcode|6-7 R|8-9 IX|10 I|11-15 Address|
                 int register = Integer.parseInt(parts[1]);
                 int index = Integer.parseInt(parts[2]);
                 int address = Integer.parseInt(parts[3]);
                 int indirect = (parts.length > 4 && parts[4].equals("1")) ? 1 : 0;
 
-                instruction |= (register & 0x3) << 8;    // R bits 6-7
-                instruction |= (index & 0x3) << 6;       // IX bits 8-9
-                instruction |= (indirect & 0x1) << 5;    // I bit 10
-                instruction |= (address & 0x1F);         // Address bits 11-15
+                instruction |= (register & 0x3) << 8;    // R bits 9-8
+                instruction |= (index & 0x3) << 6;       // IX bits 7-6
+                instruction |= (indirect & 0x1) << 5;    // I bit 5
+                instruction |= (address & 0x1F);         // Address bits 4-0
                 break;
 
             // === SPECIAL TRANSFER INSTRUCTIONS ===
@@ -184,14 +178,16 @@ public class Encoder {
 
             // === INDEX REGISTER LOAD/STORE ===
             case "LDX": case "STX":
-                // Format: |0-5 Opcode|6-7 IX|8-9 unused|10 I|11-15 Address|
+                // Format: |0-5 Opcode|6-7 unused|8-9 IX|10 I|11-15 Address|
                 int indexReg = Integer.parseInt(parts[1]);
                 addr = Integer.parseInt(parts[2]);
                 ind = (parts.length > 3 && parts[3].equals("1")) ? 1 : 0;
 
-                instruction |= (indexReg & 0x3) << 8;    // IX bits 6-7
-                instruction |= (ind & 0x1) << 5;         // I bit 10
-                instruction |= (addr & 0x1F);            // Address bits 11-15
+                // r field is ignored, so we can put 0 there
+                instruction |= (0 & 0x3) << 8;             // R bits 6-7 (ignored)
+                instruction |= (indexReg & 0x3) << 6;      // IX bits 8-9
+                instruction |= (ind & 0x1) << 5;           // I bit 10
+                instruction |= (addr & 0x1F);              // Address bits 11-15
                 break;
 
             // === IMMEDIATE INSTRUCTIONS ===
@@ -251,6 +247,7 @@ public class Encoder {
 
         // Convert to 6-digit octal
         return convertToOctal(instruction, 6);
+//        return Integer.toBinaryString(instruction);
     }
 
     /**
