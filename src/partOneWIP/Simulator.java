@@ -1,22 +1,21 @@
-// Simulator.java
+package src.partOneWIP;// src.partOneWIP.Simulator.java
 // Purpose: Main entry point. 
-// Reads source file, runs assembler (MemoryManager),
+// Reads source file, runs assembler (src.partOneWIP.MemoryManager),
 // writes .lst and .load output files.
 
 import java.io.IOException;
-import java.util.List;
 
 public class Simulator {
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {
-            System.err.println("Usage: java Simulator <source.asm>");
+            System.err.println("Usage: java src.partOneWIP.Simulator <source.asm>");
             System.exit(1);
         }
 
         // Read source file
         String[] src = FileIO.readSourceFile(args[0]);
 
-        // Assemble using MemoryManager
+        // Assemble using src.partOneWIP.MemoryManager
         MemoryManager mm = new MemoryManager();
         MemoryManager.Result res = mm.assemble(src);
 

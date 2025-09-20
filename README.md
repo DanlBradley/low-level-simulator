@@ -31,11 +31,11 @@ In addition, the `data/output_expected.txt` file contains the expected output fi
 ### Load/Store Instructions
 | Opcode (Octal) | Mnemonic | Format              | Description                     |
 |----------------|----------|---------------------|---------------------------------|
-| 01             | LDR      | LDR r,x,address[,I] | Load Register from Memory       |
-| 02             | STR      | STR r,x,address[,I] | Store Register to Memory        |
+| 01             | LDR      | LDR r,x,address[,I] | Load Register from src.partOneWIP.Memory       |
+| 02             | STR      | STR r,x,address[,I] | Store Register to src.partOneWIP.Memory        |
 | 03             | LDA      | LDA r,x,address[,I] | Load Register with Address      |
-| 41             | LDX      | LDX x,address[,I]   | Load Index Register from Memory |
-| 42             | STX      | STX x,address[,I]   | Store Index Register to Memory  |
+| 41             | LDX      | LDX x,address[,I]   | Load Index Register from src.partOneWIP.Memory |
+| 42             | STX      | STX x,address[,I]   | Store Index Register to src.partOneWIP.Memory  |
 
 ### Transfer Instructions
 | Opcode (Octal) | Mnemonic | Format               | Description                  |
@@ -52,8 +52,8 @@ In addition, the `data/output_expected.txt` file contains the expected output fi
 ### Arithmetic and Logical Instructions
 | Opcode (Octal) | Mnemonic | Format              | Description                      |
 |----------------|----------|---------------------|----------------------------------|
-| 04             | AMR      | AMR r,x,address[,I] | Add Memory to Register           |
-| 05             | SMR      | SMR r,x,address[,I] | Subtract Memory from Register    |
+| 04             | AMR      | AMR r,x,address[,I] | Add src.partOneWIP.Memory to Register           |
+| 05             | SMR      | SMR r,x,address[,I] | Subtract src.partOneWIP.Memory from Register    |
 | 06             | AIR      | AIR r,immed         | Add Immediate to Register        |
 | 07             | SIR      | SIR r,immed         | Subtract Immediate from Register |
 

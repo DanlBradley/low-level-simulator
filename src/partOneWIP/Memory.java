@@ -1,4 +1,4 @@
-// Memory.java
+package src.partOneWIP;// src.partOneWIP.Memory.java
 // Purpose: Represents 16-bit word-addressable memory (2048 words).
 // Provides read and write functions with range and 16-bit masking.
 

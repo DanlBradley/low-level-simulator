@@ -1,4 +1,4 @@
-// MemoryManager.java
+package src.partOneWIP;// src.partOneWIP.MemoryManager.java
 // Minimal 2-pass assembler driver.
 // Pass 1: collects labels and assigns addresses.
 // Pass 2: generates memory words for Data/Instructions, builds .lst and .load outputs.
