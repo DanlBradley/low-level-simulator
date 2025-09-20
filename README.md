@@ -17,6 +17,8 @@ To run the assembler, execute the following command from the root directory:
 java -jar build/assembler/*.jar data/assembly.txt data/listing.txt data/load.txt
 ```
 
+The output files will placed as suggested above in the data/ folder.
+
 Additionally, if you wish to run a full test of the encoder, run this command from the root directory:
 ```
 java -jar build/encoder-test/*.jar
