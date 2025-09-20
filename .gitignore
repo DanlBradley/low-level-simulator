@@ -27,4 +27,3 @@ replay_pid*
 
 # Ignore OUT and meta inf from intellij - automatically created on build
 out/
-META-INF/

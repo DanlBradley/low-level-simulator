@@ -10,11 +10,16 @@ assembly language into machine code that can be executed by the C6461 simulator.
 ## Quick Start
 This project includes a runnable JAR file contained in the `build` directory. To run, the user must include an input 
 file as well as an output file. Test files have been provided in the `data` directory following the C6461 ISA 
-documentation. 
+documentation.
 
 To run the assembler, execute the following command from the root directory:
 ```
-java -jar build/low-level-simulator.jar data/assembly.txt data/listing.txt data/load.txt
+java -jar build/assembler/low-level-simulator.jar data/assembly.txt data/listing.txt data/load.txt
+```
+
+Additionally, if you wish to run a full test of the encoder, run this command from the root directory:
+```
+java -jar build/encoder-test/low-level-simulator.jar
 ```
 
 In addition, the `data/output_expected.txt` file contains the expected output file from C6461 doc pp. 20.

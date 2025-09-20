@@ -95,14 +95,14 @@ public final class MemoryManager {
             }
 
             // Instruction case
-            String enc = Encoder.encodeInstruction(lc, line); // "AAAAAA IIIIII mnemonic..."
-            String[] parts = enc.split("\\s+");
-            int addr = Integer.parseInt(parts[0], 8);
-            int word = Integer.parseInt(parts[1], 8);
-            mem.write(addr, word);
-            listingLines.add(enc);
-            loadLines.add(parts[0] + " " + parts[1]);
-            lc++;
+//            String enc = Encoder.encodeInstruction(lc, line); // "AAAAAA IIIIII mnemonic..."
+//            String[] parts = enc.split("\\s+");
+//            int addr = Integer.parseInt(parts[0], 8);
+//            int word = Integer.parseInt(parts[1], 8);
+//            mem.write(addr, word);
+//            listingLines.add(enc);
+//            loadLines.add(parts[0] + " " + parts[1]);
+//            lc++;
         }
     }
 
