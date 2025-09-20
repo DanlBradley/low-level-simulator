@@ -247,6 +247,7 @@ public class Encoder {
 
         // Convert to 6-digit octal
         return convertToOctal(instruction, 6);
+//        System.out.println(convertToOctal(instruction, 6));
 //        return Integer.toBinaryString(instruction);
     }
 

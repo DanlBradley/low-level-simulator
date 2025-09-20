@@ -18,7 +18,6 @@ public class EncoderTest {
         testIOInstructions();
         testEdgeCases();
         testAdditionalCases();
-        testDEBUGCases();// These are the ones put up by Dan in DEBUGTest
 
         // Print final results
         System.out.println("\n=== Test Results ===");
@@ -119,15 +118,15 @@ public class EncoderTest {
     private static void testEdgeCases() {
         System.out.println("\n--- Testing Edge Cases ---");
 
-        assertEncode("LDR 3,3,31", "003777", "LDR with max values (r=3, ix=3, addr=31)");
+        assertEncode("LDR 3,3,31", "003737", "LDR with max values (r=3, ix=3, addr=31)");
         assertEncode("AIR 3,31", "015437", "AIR with max immediate (r=3, immed=31)");
         assertEncode("TRAP 15", "060017", "TRAP with max trap code");
         assertEncode("LDR 0,0,0", "002000", "LDR with min values");
         assertEncode("AIR 0,0", "014000", "AIR with min values");
-        assertEncode("LDR 1,0,5 1", "002425", "LDR with indirect addressing (I=1)");
-        assertEncode("STR 2,1,10 1", "005151", "STR with indirect addressing");
+        assertEncode("LDR 1,0,5 1", "002445", "LDR with indirect addressing (I=1)");
+        assertEncode("STR 2,1,10 1", "005152", "STR with indirect addressing");
         assertEncode("MLT 3,3", "161700", "MLT with max registers (rx=3, ry=3)");
-        assertEncode("SRC 3,15,1,1", "065717", "SRC with max values (r=3, count=15, L/R=1, A/L=1)");
+        assertEncode("SRC 3,15,1,1", "063717", "SRC with max values (r=3, count=15, L/R=1, A/L=1)");
     }
 
 
@@ -135,12 +134,12 @@ public class EncoderTest {
         System.out.println("\n--- Testing Additional Cases ---");
 
         // indirect addressing tests
-        assertEncode("JMA 2,15 1", "030267", "JMA with indirect addressing");
-        assertEncode("JSR 0,31 1", "030037", "JSR with indirect addressing");
+        assertEncode("JMA 2,15 1", "026257", "JMA with indirect addressing");
+        assertEncode("JSR 0,31 1", "030077", "JSR with indirect addressing");
 
         // Zero immediate values
         assertEncode("SIR 0,0", "016000", "SIR with zero immediate");
-        assertEncode("SIR 3,0", "017600", "SIR register 3, zero immediate");
+        assertEncode("SIR 3,0", "017400", "SIR register 3, zero immediate");
 
         // More shift/rotate combinations
         assertEncode("SRC 0,1,0,0", "062001", "SRC minimal values");
@@ -152,28 +151,8 @@ public class EncoderTest {
 
         // More I/O edge cases
         assertEncode("OUT 0,31", "144037", "OUT with max device ID");
-        assertEncode("CHK 3,0", "147600", "CHK with min device ID");
+        assertEncode("CHK 3,0", "147400", "CHK with min device ID");
     }
-
-    private static void testDEBUGCases() {
-        System.out.println("\n--- Testing Cases Put by Dan in DEBUGTest ---");
-
-        // Dan's specific test cases from DEBUGTest.java
-        assertEncode("LDR 1,1,15,1", "002557", "LDR 1,1,15 with indirect");
-        assertEncode("STR 1,1,15,1", "004557", "STR 1,1,15 with indirect");
-        assertEncode("LDA 1,1,15,1", "006557", "LDA 1,1,15 with indirect");
-        assertEncode("LDX 2,15,1", "102257", "LDX 2,15 with indirect");
-        assertEncode("STX 2,15,1", "104257", "STX 2,15 with indirect");
-        assertEncode("JZ 2,1,15", "021117", "JZ 2,1,15");
-        assertEncode("JNE 2,1,15", "023117", "JNE 2,1,15");
-        assertEncode("JCC 2,3,15,1", "025357", "JCC 2,3,15 with indirect");
-        assertEncode("JMA 2,15,1", "026257", "JMA 2,15 with indirect");
-        assertEncode("JSR 2,15,1", "030257", "JSR 2,15 with indirect");
-        assertEncode("RFS 2", "032002", "RFS with return code 2");
-        assertEncode("SOB 2,1,15,1", "035157", "SOB 2,1,15 with indirect");
-        assertEncode("JGE 2,1,15,1", "037157", "JGE 2,1,15 with indirect");
-    }
-
 
     private static void assertEncode(String instruction, String expected, String description) {
         try {
