@@ -14,16 +14,22 @@ documentation.
 
 To run the assembler, execute the following command from the root directory:
 ```
-java -jar build/assembler/low-level-simulator.jar data/assembly.txt data/listing.txt data/load.txt
+java -jar build/assembler/*.jar data/assembly.txt data/listing.txt data/load.txt
 ```
 
 Additionally, if you wish to run a full test of the encoder, run this command from the root directory:
 ```
-java -jar build/encoder-test/low-level-simulator.jar
+java -jar build/encoder-test/*.jar
 ```
 
 In addition, the `data/output_expected.txt` file contains the expected output file from C6461 doc pp. 20.
 
+## Implementation Notes - Part 0
+For part 0, the main class being run as a jar is src.Assembler. This file reads source files and outputs listing 
+and load files via the src.FileIO class. The Assembler class is essentially a simplified 2-pass assembler, first 
+collecting labels as a map, then generating listing and load file output thru system directives and instructions. The 
+src.Encoder class is responsible for all instruction encodings, while the src.Assembler class directly handles 
+directives.
 
 ## Instruction Set - All Opcodes
 
