@@ -3,6 +3,12 @@ package src;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Encodes instructions into a packed 16-bit effective addresses as a 6-digit octal number. Utilizes a hash map lookup table
+ * for efficient opcode lookup, which is used in the switch-case statement to identify instruction method.
+ *
+ * Also provides a utility function to convert decimal values to octal.
+ */
 public class Encoder {
 
     // Opcode lookup table for O(1) opcode value retrieval
