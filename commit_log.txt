@@ -1,0 +1,42 @@
+2b3de5f - danlbradley, 4 minutes ago : data note
+2296e17 - danlbradley, 7 minutes ago : clean up
+f709bee - danlbradley, 18 minutes ago : update
+7daf610 - Daniel Bradley, 43 minutes ago : Merge pull request #14 from DanlBradley/dylan
+799d0f2 - danlbradley, 43 minutes ago : resolve merge
+64eaa94 - danlbradley, 45 minutes ago : fix a few tests
+910a900 - Daniel Bradley, 2 hours ago : Merge pull request #13 from DanlBradley/kevin-branch
+604f36b - danlbradley, 2 hours ago : refactor
+3c32ef6 - danlbradley, 2 hours ago : refactor
+753a31a - Daniel Bradley, 2 hours ago : Merge pull request #8 from kwang003/Memory
+460c977 - dylan_panashe, 22 hours ago : Added comprehensive EncoderTest. With sooo many test cases, maybe some unnecessary ones as well. Tried to make the outputs to be as descriptive as possible
+2e660c0 - Daniel Bradley, 24 hours ago : Merge pull request #12 from DanlBradley/integration
+783e3c4 - danlbradley, 24 hours ago : committing .jar file for ease of use
+caf341b - danlbradley, 24 hours ago : fixed addressing issue
+cb366e8 - Daniel Bradley, 2 days ago : Merge pull request #11 from DanlBradley/integration
+7c1777c - danlbradley, 2 days ago : fix encoder bit parsing
+43ba507 - Daniel Bradley, 2 days ago : Merge pull request #10 from DanlBradley/integration
+1a90b55 - danlbradley, 2 days ago : clean up repo and integrate fileIO
+4ab041f - danlbradley, 2 days ago : Merge branch 'main' into feature/dan-ref-assembler
+dd0b229 - danlbradley, 2 days ago : removed out folder from version control
+95c0438 - Daniel Bradley, 2 days ago : Merge pull request #9 from DanlBradley/feature/dan-ref-assembler
+7552526 - danlbradley, 2 days ago : added assembler and updated listing/load files
+5227876 - danlbradley, 2 days ago : built assembler
+f164681 - kwang003, 3 days ago : Memory Operations 1st Commit
+0b3e24d - Dnyaneshwari Kumthekar, 3 days ago : I/O by Dnyaneshwari Ram Kumthekar
+a8a8b2e - danlbradley, 4 days ago : project complete w assembler
+4b805df - Daniel Bradley, 4 days ago : Merge pull request #6 from DanlBradley/feature/dan-encoder-v1
+1326861 - danlbradley, 4 days ago : updated from big- to little-endian formatting
+f1c2d0d - Daniel Bradley, 4 days ago : Merge pull request #4 from DanlBradley/feature/dan-encoder-v1
+def147c - danlbradley, 4 days ago : encoder v1 complete
+e6adf77 - danlbradley, 5 days ago : get the pumpkin mousse from TJs
+3a6ad2d - danlbradley, 5 days ago : sync
+0103718 - Daniel Bradley, 5 days ago : Merge pull request #3 from DanlBradley/dan-project-flow
+98cb653 - danlbradley, 5 days ago : updated overview in simulatorOverview.java
+ec5d324 - danlbradley, 5 days ago : Merge branch 'main' into dan-project-flow
+e4f34c3 - danlbradley, 5 days ago : updated over overview
+f62f987 - Daniel Bradley, 7 days ago : Merge pull request #2 from DanlBradley/feature/dan-simple-assembler
+f5e37e0 - danlbradley, 9 days ago : initial simple assembler
+49e1d99 - danlbradley, 9 days ago : added simple assember script
+fcb311b - Daniel Bradley, 10 days ago : Merge pull request #1 from DanlBradley/feature/dan-initial-commit
+c0763ed - danlbradley, 10 days ago : initial commit
+a463e1b - Daniel Bradley, 10 days ago : Initial commit
