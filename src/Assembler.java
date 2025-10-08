@@ -14,7 +14,7 @@ public class Assembler {
     // current location (where addresses should be saved/operated on etc.)
     private static int currentLoc = 0;
 
-    public static void main(String[] args) {
+    public static void assembleFile(String[] args) {
         if (args.length != 3) {
             System.out.println("Usage: java src.Assembler <assembly.txt> <listing.txt> <load.txt>");
             System.exit(1);

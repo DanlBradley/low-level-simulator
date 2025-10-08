@@ -13,6 +13,7 @@ public class Encoder {
 
     // Opcode lookup table for O(1) opcode value retrieval
     private static Map<String, Integer> opcodeMap;
+    private static Map<Integer, String> opcodeNameMap;
 
     static {
         opcodeMap = new HashMap<>();
@@ -53,11 +54,16 @@ public class Encoder {
         opcodeMap.put("IN", 49);
         opcodeMap.put("OUT", 50);
         opcodeMap.put("CHK", 51);
+
+        opcodeNameMap = new HashMap<>();
+        for(Map.Entry<String, Integer> entry : opcodeMap.entrySet()) {
+            opcodeNameMap.put(entry.getValue(), entry.getKey());
+        }
     }
 
-//    public static void main(String[] args) {
-//        testEncoder(args);
-//    }
+    public static String getOpcodeName(int opcode) {
+        return opcodeNameMap.getOrDefault(opcode, "UNKNOWN");
+    }
 
     /**
      *  Right now this just assembles using predefined address location. The file goes like:
