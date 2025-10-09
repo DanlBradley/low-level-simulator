@@ -27,3 +27,7 @@ replay_pid*
 
 # Ignore OUT and meta inf from intellij - automatically created on build
 out/
+
+# ignore ds store:
+.DS_Store
+*/.DS_Store
