@@ -4,6 +4,9 @@ public class Memory {
     private short[] memory;
     private static final int MEMORY_SIZE = 2048;
 
+    /**
+     * Initializes memory of size MEMORY_SIZE with 0's.
+     */
     public Memory() {
         memory = new short[MEMORY_SIZE];
         reset();

@@ -20,7 +20,7 @@ public class ROMLoader {
 
                     memory.load(address, instruction);
                 }
-//                System.out.println(line);
+
                 int address = Integer.parseInt(parts[0], 8);
                 int value = Integer.parseInt(parts[1], 8);
                 System.out.println("Loading: addr=" + address + " (octal: " + parts[0] +

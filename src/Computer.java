@@ -1,8 +1,8 @@
 package src;
 
 public class Computer {
-    private CPU cpu;
-    private Memory memory;
+    private final CPU cpu;
+    private final Memory memory;
     private boolean halted;
 
     private static final int LDR = 1;
@@ -60,33 +60,48 @@ public class Computer {
         System.out.println("FETCH: PC=" + (cpu.PC-1) + " IR=" + unsignedIR +
                 " (octal: " + String.format("%06o", unsignedIR) + ")");
 
-        // DECODE
+        // decode step
         int opcode = cpu.getOpcode(cpu.IR);
         int reg = cpu.getRegister(cpu.IR);
         int ix = cpu.getIndexReg(cpu.IR);
         int indirect = cpu.getIndirect(cpu.IR);
         int address = cpu.getAddress(cpu.IR);
 
-        // EXECUTE
+        // execute step
         executeInstruction(opcode, reg, ix, indirect, address);
     }
 
-    private void executeInstruction(int opcode, int reg, int ix, int indirect, int address) {
+
+    /**
+     * Get the effective address for an instruction. Implementation from pp. 7 of C6461 doc.
+     * @param address
+     * @param ix
+     * @param ind
+     * @return effective address
+     */
+    private int getEffectiveAddress(int address, int ix, int ind) {
         int effectiveAddress = address;
-
-        // Add index register if specified (IX != 0)
-        if(ix > 0 && ix <= 3) {
+        if (ix >0 && ix <= 3) {
             effectiveAddress += cpu.IX[ix];
-            System.out.println("Index register X" + ix + " = " + cpu.IX[ix] +
-                    ", EA = " + address + " + " + cpu.IX[ix] + " = " + effectiveAddress);
         }
-
-        // Handle indirect addressing
-        if(indirect == 1) {
-            int indirectAddr = effectiveAddress;
+        if (ind == 1) {
             effectiveAddress = memory.read(effectiveAddress);
-            System.out.println("Indirect: M[" + indirectAddr + "] = " + effectiveAddress);
         }
+        return effectiveAddress;
+    }
+
+    /**
+     * Execute an instruction. Parses instruction differently depending on opcode. It may eventually make more sense
+     * to break these switch case statements out into separate methods but for now I think they're small enough they
+     * can be handled within this method directly.
+     * @param opcode
+     * @param reg
+     * @param ix
+     * @param indirect
+     * @param address
+     */
+    private void executeInstruction(int opcode, int reg, int ix, int indirect, int address) {
+        int effectiveAddress = getEffectiveAddress(address, ix, indirect);
 
         String opcodeName = Encoder.getOpcodeName(opcode);
         System.out.println("EXECUTE: " + opcodeName + " (Opcode=" + opcode + ") EA=" + effectiveAddress);
@@ -108,12 +123,16 @@ public class Computer {
                 break;
 
             case LDA:
-                cpu.R[reg] = (short)effectiveAddress;
-                System.out.println("LDA: R" + reg + " = " + effectiveAddress);
+                if (reg >= 0 && reg <= 3) {
+                    cpu.R[reg] = (short)effectiveAddress;
+                    System.out.println("LDA: R" + reg + " = " + effectiveAddress);
+                } else {
+                    System.out.println("ERROR: Invalid register " + reg + " for LDA");
+                }
+
                 break;
 
-            case LDX:  // Load Index Register
-                // Note: for LDX, the 'ix' field specifies which index register to load
+            case LDX:
                 if(ix >= 1 && ix <= 3) {
                     cpu.IX[ix] = memory.read(effectiveAddress);
                     System.out.println("LDX: X" + ix + " = M[" + effectiveAddress + "] = " + cpu.IX[ix]);
@@ -122,7 +141,8 @@ public class Computer {
                 }
                 break;
 
-            case JZ:  // Jump if Zero
+                //JZ not necessary but it's used in the example listing file so we included it here.
+            case JZ:
                 if(cpu.R[reg] == 0) {
                     cpu.PC = (short)effectiveAddress;
                     System.out.println("JZ: R" + reg + " is zero, jumping to " + effectiveAddress);
@@ -138,19 +158,10 @@ public class Computer {
     }
 
     public void run() {
-        System.out.println("\n=== Running Program ===");
+        System.out.println("\nRunning Program");
         while(!halted) {
             singleStep();
         }
         System.out.println("Program execution completed");
-    }
-
-    public void printRegisters() {
-        System.out.println("\n=== Register Status ===");
-        System.out.println("PC=" + cpu.PC + " IR=" + cpu.IR);
-        System.out.println("MAR=" + cpu.MAR + " MBR=" + cpu.MBR);
-        for(int i = 0; i < 4; i++) {
-            System.out.println("R" + i + "=" + cpu.R[i]);
-        }
     }
 }
