@@ -2,33 +2,53 @@ package src;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 
 public class ComputerSimulatorGUI extends JFrame {
     private Computer computer;
 
     private JTextField[] gprFields = new JTextField[4];
-    private JTextField[] ixrFields = new JTextField[4];
+    private JTextField[] ixrFields = new JTextField[4]; // index 0 unused
     private JTextField pcField, marField, mbrField, irField;
     private JTextField ccField, mfrField;
 
+    // Binary display
     private JTextArea binaryDisplay;
+
+    // Octal input
     private JTextField octalInput;
+
     private JTextField programFileField;
 
+    // Cache display
     private JTextArea cacheDisplay;
+
+    // Printer output
     private JTextArea printerOutput;
-    private JTextField consoleInputField;
+
+    // Console input
+    private JTextField consoleInput;
+
+    private ByteArrayOutputStream outputStream;
 
     public ComputerSimulatorGUI() {
         computer = new Computer();
+        setupOutputStream();
         setupUI();
+
         programFileField.setText("data/load.txt");
-        updateDisplay();
+    }
+
+    private void setupOutputStream() {
+        outputStream = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(outputStream);
+        System.setOut(ps);
     }
 
     private void setupUI() {
         setTitle("CSCI 6461 Machine Simulator");
-        setSize(1200, 600);
+        setSize(1400, 800);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
 
@@ -37,16 +57,17 @@ public class ComputerSimulatorGUI extends JFrame {
         mainPanel.setLayout(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JPanel centerPanel = createCenterPanel();
-        mainPanel.add(centerPanel, BorderLayout.CENTER);
+        JPanel leftPanel = createLeftPanel();
 
         JPanel rightPanel = createRightPanel();
+
+        mainPanel.add(leftPanel, BorderLayout.CENTER);
         mainPanel.add(rightPanel, BorderLayout.EAST);
 
         add(mainPanel);
     }
 
-    private JPanel createCenterPanel() {
+    private JPanel createLeftPanel() {
         JPanel panel = new JPanel();
         panel.setOpaque(false);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -71,73 +92,12 @@ public class ComputerSimulatorGUI extends JFrame {
         return panel;
     }
 
-    private JPanel createRightPanel() {
-        JPanel rightPanel = new JPanel();
-        rightPanel.setOpaque(false);
-        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-        rightPanel.setPreferredSize(new Dimension(400, 0));
-        rightPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-
-        JLabel cacheLabel = new JLabel("Cache Content");
-        cacheLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        cacheLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        rightPanel.add(cacheLabel);
-        rightPanel.add(Box.createVerticalStrut(5));
-
-        cacheDisplay = new JTextArea(12, 35);
-        cacheDisplay.setEditable(false);
-        cacheDisplay.setBackground(Color.WHITE);
-        cacheDisplay.setFont(new Font("Monospaced", Font.PLAIN, 10));
-        JScrollPane cacheScroll = new JScrollPane(cacheDisplay);
-        cacheScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
-        cacheScroll.setPreferredSize(new Dimension(380, 200));
-        cacheScroll.setMaximumSize(new Dimension(380, 200));
-        rightPanel.add(cacheScroll);
-
-        rightPanel.add(Box.createVerticalStrut(15));
-
-        JLabel printerLabel = new JLabel("Printer");
-        printerLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        printerLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        rightPanel.add(printerLabel);
-        rightPanel.add(Box.createVerticalStrut(5));
-
-        printerOutput = new JTextArea(10, 35);
-        printerOutput.setEditable(false);
-        printerOutput.setBackground(Color.WHITE);
-        printerOutput.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        JScrollPane printerScroll = new JScrollPane(printerOutput);
-        printerScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
-        printerScroll.setPreferredSize(new Dimension(380, 180));
-        printerScroll.setMaximumSize(new Dimension(380, 180));
-        rightPanel.add(printerScroll);
-
-        rightPanel.add(Box.createVerticalStrut(15));
-
-        JLabel consoleLabel = new JLabel("Console Input");
-        consoleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        consoleLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        rightPanel.add(consoleLabel);
-        rightPanel.add(Box.createVerticalStrut(5));
-
-        consoleInputField = new JTextField(35);
-        consoleInputField.setAlignmentX(Component.LEFT_ALIGNMENT);
-        consoleInputField.setMaximumSize(new Dimension(380, 30));
-        consoleInputField.setPreferredSize(new Dimension(380, 30));
-        rightPanel.add(consoleInputField);
-
-        rightPanel.add(Box.createVerticalGlue());
-
-        return rightPanel;
-    }
-
     private JPanel createRegistersPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.ipadx = 40;
 
         gbc.gridx = 0; gbc.gridy = 0;
         panel.add(new JLabel("GPR"), gbc);
@@ -148,13 +108,11 @@ public class ComputerSimulatorGUI extends JFrame {
             panel.add(new JLabel(String.valueOf(i)), gbc);
 
             gbc.gridx = 1;
-            gprFields[i] = createWideRegisterField();
+            gprFields[i] = createRegisterField();
             panel.add(gprFields[i], gbc);
 
             gbc.gridx = 2;
-            int regIndex = i;
             JButton btn = createSmallButton();
-            btn.addActionListener(e -> loadToGPR(regIndex));
             panel.add(btn, gbc);
         }
 
@@ -167,69 +125,63 @@ public class ComputerSimulatorGUI extends JFrame {
             panel.add(new JLabel(String.valueOf(i)), gbc);
 
             gbc.gridx = 4;
-            ixrFields[i] = createWideRegisterField();
+            ixrFields[i] = createRegisterField();
             panel.add(ixrFields[i], gbc);
 
             gbc.gridx = 5;
-            int ixIndex = i;
             JButton btn = createSmallButton();
-            btn.addActionListener(e -> loadToIXR(ixIndex));
             panel.add(btn, gbc);
         }
 
+        // PC, MAR, MBR, IR
         gbc.gridx = 6; gbc.gridy = 0;
         panel.add(new JLabel("PC"), gbc);
         gbc.gridy = 1;
-        pcField = createWideRegisterField();
+        pcField = createRegisterField();
         panel.add(pcField, gbc);
         gbc.gridy = 2;
         JButton pcBtn = createSmallButton();
-        pcBtn.addActionListener(e -> loadToPC());
         panel.add(pcBtn, gbc);
 
         gbc.gridy = 0;
         gbc.gridx = 8;
         panel.add(new JLabel("MAR"), gbc);
         gbc.gridy = 1;
-        marField = createWideRegisterField();
+        marField = createRegisterField();
         panel.add(marField, gbc);
         gbc.gridy = 2;
         JButton marBtn = createSmallButton();
-        marBtn.addActionListener(e -> loadToMAR());
         panel.add(marBtn, gbc);
 
         gbc.gridy = 0;
         gbc.gridx = 10;
         panel.add(new JLabel("MBR"), gbc);
         gbc.gridy = 1;
-        mbrField = createWideRegisterField();
+        mbrField = createRegisterField();
         panel.add(mbrField, gbc);
         gbc.gridy = 2;
         JButton mbrBtn = createSmallButton();
-        mbrBtn.addActionListener(e -> loadToMBR());
         panel.add(mbrBtn, gbc);
 
         gbc.gridy = 0;
         gbc.gridx = 12;
         panel.add(new JLabel("IR"), gbc);
         gbc.gridy = 1;
-        irField = createWideRegisterField();
+        irField = createRegisterField();
         panel.add(irField, gbc);
 
         gbc.gridy = 3;
         gbc.gridx = 8;
         panel.add(new JLabel("CC"), gbc);
         gbc.gridy = 4;
-        ccField = new JTextField("OUDE", 18);
-        ccField.setEditable(false);
+        ccField = new JTextField("OUDE", 8);
         panel.add(ccField, gbc);
 
         gbc.gridy = 3;
         gbc.gridx = 10;
         panel.add(new JLabel("MFR"), gbc);
         gbc.gridy = 4;
-        mfrField = new JTextField("MOTR", 18);
-        mfrField.setEditable(false);
+        mfrField = new JTextField("MOTR", 8);
         panel.add(mfrField, gbc);
 
         return panel;
@@ -247,7 +199,6 @@ public class ComputerSimulatorGUI extends JFrame {
         binaryDisplay = new JTextArea(3, 30);
         binaryDisplay.setEditable(false);
         binaryDisplay.setBackground(Color.WHITE);
-        binaryDisplay.setFont(new Font("Monospaced", Font.PLAIN, 14));
         JScrollPane binaryScroll = new JScrollPane(binaryDisplay);
         binaryScroll.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(binaryScroll);
@@ -314,23 +265,53 @@ public class ComputerSimulatorGUI extends JFrame {
         return panel;
     }
 
+    private JPanel createRightPanel() {
+        JPanel panel = new JPanel();
+        panel.setOpaque(false);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        JLabel cacheLabel = new JLabel("Cache Content");
+        cacheLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(cacheLabel);
+
+        cacheDisplay = new JTextArea(15, 50);
+        cacheDisplay.setEditable(false);
+        cacheDisplay.setFont(new Font("Monospaced", Font.PLAIN, 10));
+        JScrollPane cacheScroll = new JScrollPane(cacheDisplay);
+        cacheScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(cacheScroll);
+
+        panel.add(Box.createVerticalStrut(10));
+
+        // Printer
+        JLabel printerLabel = new JLabel("Printer");
+        printerLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(printerLabel);
+
+        printerOutput = new JTextArea(15, 50);
+        printerOutput.setEditable(false);
+        printerOutput.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        JScrollPane printerScroll = new JScrollPane(printerOutput);
+        printerScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(printerScroll);
+
+        panel.add(Box.createVerticalStrut(10));
+
+        // Console Input
+        JLabel consoleLabel = new JLabel("Console Input");
+        consoleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(consoleLabel);
+
+        consoleInput = new JTextField(50);
+        consoleInput.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(consoleInput);
+
+        return panel;
+    }
+
     private JTextField createRegisterField() {
         JTextField field = new JTextField(12);
         field.setEditable(false);
-        field.setBackground(Color.WHITE);
-        field.setForeground(Color.BLACK);
-        field.setText("0");
-        field.setPreferredSize(new Dimension(120, 25));
-        return field;
-    }
-
-    private JTextField createWideRegisterField() {
-        JTextField field = new JTextField(18);
-        field.setEditable(false);
-        field.setBackground(Color.WHITE);
-        field.setForeground(Color.BLACK);
-        field.setText("0");
-        field.setPreferredSize(new Dimension(120, 25));
         return field;
     }
 
@@ -348,115 +329,56 @@ public class ComputerSimulatorGUI extends JFrame {
         return btn;
     }
 
-    private void loadToGPR(int index) {
-        try {
-            String octal = octalInput.getText().trim();
-            int value = Integer.parseInt(octal, 8);
-            computer.getCPU().R[index] = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into R" + index);
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void loadToIXR(int index) {
-        try {
-            String octal = octalInput.getText().trim();
-            int value = Integer.parseInt(octal, 8);
-            computer.getCPU().IX[index] = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into X" + index);
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void loadToPC() {
-        try {
-            String octal = octalInput.getText().trim();
-            int value = Integer.parseInt(octal, 8);
-            computer.getCPU().PC = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into PC");
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void loadToMAR() {
-        try {
-            String octal = octalInput.getText().trim();
-            int value = Integer.parseInt(octal, 8);
-            computer.getCPU().MAR = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into MAR");
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void loadToMBR() {
-        try {
-            String octal = octalInput.getText().trim();
-            int value = Integer.parseInt(octal, 8);
-            computer.getCPU().MBR = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into MBR");
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
     private void ipl() {
         String programFile = programFileField.getText();
+        outputStream.reset();
         computer = new Computer();
         computer.IPL(programFile, 14);
         updateDisplay();
-        JOptionPane.showMessageDialog(this, "Program loaded successfully!");
+        updatePrinterOutput();
     }
 
     private void step() {
+        outputStream.reset();
         computer.singleStep();
         updateDisplay();
+        updatePrinterOutput();
     }
 
     private void run() {
+        outputStream.reset();
         computer.run();
         updateDisplay();
-        JOptionPane.showMessageDialog(this, "Program execution completed!");
+        updatePrinterOutput();
     }
 
     private void halt() {
         updateDisplay();
-        JOptionPane.showMessageDialog(this, "Halted!");
     }
 
     private void updateDisplay() {
+        // Update GPRs
         for (int i = 0; i < 4; i++) {
-            gprFields[i].setText(String.format("%06o", computer.getCPU().R[i] & 0xFFFF));
+            gprFields[i].setText(String.valueOf(computer.cpu.R[i]));
         }
 
+        // Update IXRs
         for (int i = 1; i <= 3; i++) {
-            ixrFields[i].setText(String.format("%06o", computer.getCPU().IX[i] & 0xFFFF));
+            ixrFields[i].setText(String.valueOf(computer.cpu.IX[i]));
         }
 
-        pcField.setText(String.format("%06o", computer.getCPU().PC & 0xFFFF));
-        marField.setText(String.format("%06o", computer.getCPU().MAR & 0xFFFF));
-        mbrField.setText(String.format("%06o", computer.getCPU().MBR & 0xFFFF));
-        irField.setText(String.format("%06o", computer.getCPU().IR & 0xFFFF));
+        pcField.setText(String.valueOf(computer.cpu.PC));
+        marField.setText(String.valueOf(computer.cpu.MAR));
+        mbrField.setText(String.valueOf(computer.cpu.MBR));
+        irField.setText(String.valueOf(computer.cpu.IR & 0xFFFF));
 
         updateBinaryDisplay();
+
         updateCacheDisplay();
     }
 
     private void updateBinaryDisplay() {
-        int ir = computer.getCPU().IR & 0xFFFF;
+        int ir = computer.cpu.IR & 0xFFFF;
         String binary = String.format("%16s", Integer.toBinaryString(ir)).replace(' ', '0');
 
         StringBuilder formatted = new StringBuilder();
@@ -469,31 +391,26 @@ public class ComputerSimulatorGUI extends JFrame {
     }
 
     private void updateCacheDisplay() {
-        StringBuilder cache = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
 
-        for (int row = 0; row < 8; row++) {
+        for (int row = 0; row < 5; row++) {
             for (int col = 0; col < 8; col++) {
-                int address = row * 8 + col;
-                short value = computer.getMemory().read(address);
-                cache.append(String.format("%03o %06o ", address, value & 0xFFFF));
+                int addr = row * 8 + col;
+                short value = computer.memory.read(addr);
+                sb.append(String.format("%03d %06d ", addr, value & 0xFFFF));
             }
-            cache.append("\n");
+            sb.append("\n");
         }
 
-        cacheDisplay.setText(cache.toString());
+        cacheDisplay.setText(sb.toString());
     }
 
-    public void printToOutput(String text) {
-        printerOutput.append(text + "\n");
+    private void updatePrinterOutput() {
+        String output = outputStream.toString();
+        printerOutput.setText(output);
+
+        // Auto-scroll to bottom
         printerOutput.setCaretPosition(printerOutput.getDocument().getLength());
-    }
-
-    public String getConsoleInput() {
-        return consoleInputField.getText();
-    }
-
-    public void clearConsoleInput() {
-        consoleInputField.setText("");
     }
 
     public static void main(String[] args) {
