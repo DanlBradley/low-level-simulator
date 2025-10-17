@@ -1,8 +1,8 @@
 package src;
 
 public class Computer {
-    private final CPU cpu;
-    private final Memory memory;
+    CPU cpu;
+    Memory memory;
     private boolean halted;
 
     private static final int LDR = 1;
