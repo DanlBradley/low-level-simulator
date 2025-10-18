@@ -15,12 +15,12 @@ public class ComputerSimulatorGUI extends JFrame {
 
     private JTextField octalInput;
 
-    private JTextField programFileField;
+    private JTextField assemblyFileField;
 
     public ComputerSimulatorGUI() {
         computer = new Computer();
         setupUI();
-        programFileField.setText("data/load.txt");
+        assemblyFileField.setText("data/load_store_test.txt");
         updateDisplay();
     }
 
@@ -245,8 +245,8 @@ public class ComputerSimulatorGUI extends JFrame {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panel.setOpaque(false);
         panel.add(new JLabel("Program File"));
-        programFileField = new JTextField(40);
-        panel.add(programFileField);
+        assemblyFileField = new JTextField(40);
+        panel.add(assemblyFileField);
         return panel;
     }
 
@@ -350,9 +350,13 @@ public class ComputerSimulatorGUI extends JFrame {
     }
 
     private void ipl() {
-        String programFile = programFileField.getText();
+        String assemFile = assemblyFileField.getText();
+        String loadFile = src.Assembler.assembleFile(
+                assemFile,
+                "data/listing.txt",
+                "data/load.txt");
         computer = new Computer();
-        computer.IPL(programFile, 14);
+        computer.IPL(loadFile, Integer.parseInt(pcField.getText().trim(), 8));
         updateDisplay();
         JOptionPane.showMessageDialog(this, "Program loaded successfully!");
     }

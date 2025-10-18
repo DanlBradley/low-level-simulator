@@ -10,6 +10,7 @@ public class Computer {
     private static final int LDA = 3;
     private static final int HLT = 0;
     private static final int LDX = 33;  //41 octal is 33
+    private static final int STX = 34;
     private static final int JZ =  8; //10 octal is 8
 
     public Computer() {
@@ -20,8 +21,9 @@ public class Computer {
 
     public static void main(String[] args) {
         System.out.println("Running the computer!\n");
+        src.Assembler.assembleFile("data/load_store_test.txt", "data/listing.txt", "data/load.txt");
         Computer computer = new Computer();
-        computer.IPL("data/load.txt", 14); //How to get the start address from the load file?
+        computer.IPL("data/load.txt", 9);
         computer.run();
     }
 
@@ -140,8 +142,17 @@ public class Computer {
                     System.out.println("ERROR: Invalid index register " + ix + " for LDX");
                 }
                 break;
+            case STX:
+                if(ix >= 1 && ix <= 3) {
+                    memory.write(effectiveAddress, cpu.IX[ix]);
+                    System.out.println("STX: M[" + effectiveAddress + "] = X" + ix + " = " + cpu.IX[ix]);
+                } else {
+                    System.out.println("ERROR: Invalid index register " + ix + " for STX");
+                }
+                break;
 
-                //JZ not necessary but it's used in the example listing file so we included it here.
+            //JZ not necessary but it's used in the example listing file so we included it here and we'll need
+            // it in part 2 anyway.
             case JZ:
                 if(cpu.R[reg] == 0) {
                     cpu.PC = (short)effectiveAddress;
@@ -162,6 +173,6 @@ public class Computer {
         while(!halted) {
             singleStep();
         }
-        System.out.println("Program execution completed");
+        System.out.println("\nProgram execution completed");
     }
 }
