@@ -14,24 +14,16 @@ public class Assembler {
     // current location (where addresses should be saved/operated on etc.)
     private static int currentLoc = 0;
 
-    public static void assembleFile(String[] args) {
-        if (args.length != 3) {
-            System.out.println("Usage: java src.Assembler <assembly.txt> <listing.txt> <load.txt>");
-            System.exit(1);
-        }
-
-        // Allows user to specify input and output files
-        String assemblyFile = args[0];
-        String listingFile = args[1];
-        String loadFile = args[2];
-
+    public static String assembleFile(String assemblyFile, String listingFile, String loadFile) {
         try {
             assemble(assemblyFile, listingFile, loadFile);
             System.out.println("Listing file: " + listingFile);
             System.out.println("Load file: " + loadFile);
+            return loadFile;
         } catch (Exception e) {
             System.err.println("Assembly failed: " + e.getMessage());
         }
+        return null;
     }
 
     /**

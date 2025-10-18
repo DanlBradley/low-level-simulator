@@ -15,12 +15,12 @@ public class ComputerSimulatorGUI extends JFrame {
 
     private JTextField octalInput;
 
-    private JTextField programFileField;
+    private JTextField assemblyFileField;
 
     public ComputerSimulatorGUI() {
         computer = new Computer();
         setupUI();
-        programFileField.setText("data/load.txt");
+        assemblyFileField.setText("data/load_store_test.txt");
         updateDisplay();
     }
 
@@ -72,7 +72,7 @@ public class ComputerSimulatorGUI extends JFrame {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.ipadx = 40;
+        gbc.ipadx = 60;
 
         gbc.gridx = 0; gbc.gridy = 0;
         panel.add(new JLabel("GPR"), gbc);
@@ -245,19 +245,9 @@ public class ComputerSimulatorGUI extends JFrame {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panel.setOpaque(false);
         panel.add(new JLabel("Program File"));
-        programFileField = new JTextField(40);
-        panel.add(programFileField);
+        assemblyFileField = new JTextField(40);
+        panel.add(assemblyFileField);
         return panel;
-    }
-
-    private JTextField createRegisterField() {
-        JTextField field = new JTextField(12);
-        field.setEditable(false);
-        field.setBackground(Color.WHITE);
-        field.setForeground(Color.BLACK);
-        field.setText("0");
-        field.setPreferredSize(new Dimension(120, 25));
-        return field;
     }
 
     private JTextField createWideRegisterField() {
@@ -266,7 +256,7 @@ public class ComputerSimulatorGUI extends JFrame {
         field.setBackground(Color.WHITE);
         field.setForeground(Color.BLACK);
         field.setText("0");
-        field.setPreferredSize(new Dimension(120, 25));
+        field.setPreferredSize(new Dimension(500, 25));
         return field;
     }
 
@@ -350,9 +340,13 @@ public class ComputerSimulatorGUI extends JFrame {
     }
 
     private void ipl() {
-        String programFile = programFileField.getText();
+        String assemFile = assemblyFileField.getText();
+        String loadFile = src.Assembler.assembleFile(
+                assemFile,
+                "data/listing.txt",
+                "data/load.txt");
         computer = new Computer();
-        computer.IPL(programFile, 14);
+        computer.IPL(loadFile, Integer.parseInt(pcField.getText().trim(), 8));
         updateDisplay();
         JOptionPane.showMessageDialog(this, "Program loaded successfully!");
     }
