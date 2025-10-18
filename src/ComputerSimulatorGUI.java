@@ -72,7 +72,7 @@ public class ComputerSimulatorGUI extends JFrame {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.ipadx = 40;
+        gbc.ipadx = 60;
 
         gbc.gridx = 0; gbc.gridy = 0;
         panel.add(new JLabel("GPR"), gbc);
@@ -250,23 +250,13 @@ public class ComputerSimulatorGUI extends JFrame {
         return panel;
     }
 
-    private JTextField createRegisterField() {
-        JTextField field = new JTextField(12);
-        field.setEditable(false);
-        field.setBackground(Color.WHITE);
-        field.setForeground(Color.BLACK);
-        field.setText("0");
-        field.setPreferredSize(new Dimension(120, 25));
-        return field;
-    }
-
     private JTextField createWideRegisterField() {
         JTextField field = new JTextField(18);
         field.setEditable(false);
         field.setBackground(Color.WHITE);
         field.setForeground(Color.BLACK);
         field.setText("0");
-        field.setPreferredSize(new Dimension(120, 25));
+        field.setPreferredSize(new Dimension(500, 25));
         return field;
     }
 
