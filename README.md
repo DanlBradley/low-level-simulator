@@ -1,13 +1,62 @@
 # low-level-simulator
 Repo for the CSCI 6461 Computer System Architecture Project F25 - Team 6
 
-## C6461 src.Assembler - Part 0
+## C6461 Simulator - Part 1
+
+## Overview
+This is the Simulator component for the CSCI 6461 Computer Architecture project.
+It provides a Java Swing–based user interface that allows users to:
+1. View and modify CPU registers (GPRs, Index Registers, PC, MAR, MBR, IR)
+2. Enter octal input and load values into registers
+3. Load and execute assembled programs using IPL, Step, and Run controls
+4. Monitor the current instruction in both octal and binary formats
+5. Interact with and observe the internal state of the simulated machine
+The simulator connects with the assembler output and serves as the main execution and testing interface for CSCI 
+6461 assembly programs.
+6. Note: The maximum memory value is `2048` 16-bit words. And as words are 16-bit, the simulator cannot accept 
+octal values beyond `177777`.
+
+## Simulator Quick Start
+This project includes a runnable JAR file contained in the `build` directory. To run, the user must include an input
+file as well as an output file. Test files have been provided in the `data` directory following the C6461 ISA
+documentation.
+
+To run the simulator, execute the following command from the root directory:
+```
+java -jar build/simulator/low-level-simulator.jar
+```
+
+You will be provided a GUI with several options to interact with the simulator. Steps to operate the simulator are as 
+follows:
+1. Determine which file you want to run. The `data/assembly.txt` file from the C6461 documentation is automatically 
+filled into the GUI to test. There is also a `data/load_store_text.txt` file that contains all LD/STR instructions.
+2. Determine where the first instruction of the program is located and enter that into the PC register by typing the 
+correct octal into the "OCTAL INPUT" field and selecting the button located below the PC register.
+   1. For `data/load_store_text.txt`, the first instruction is located at octal `000015`.
+   2. For `data/assembly.txt`, the first instruction is located at octal `000016`.
+3. Initiate the program using the IPL button.
+4. Step through the program using the Step button. Alternatively, you can run the program using the Run button.
+5. You can also manually load and store values into the MAR and MBR using the "OCTAL INPUT" and their 
+corresponding buttons.
+
+
+
+
+## Implementation Notes - Part 1
+
+Part 1 implements the ComputerSimulatorGUI, a Java Swing interface that connects to the Computer class to control and
+observe the CSCI 6461 machine simulator. It displays CPU registers (R0–R3, X1–X3, PC, MAR, MBR, IR) in octal format and
+allows manual register loading using octal input. The GUI supports program loading through IPL, which assembles a
+source file and initializes memory, and provides execution control via Step and Run functions. The IR is also shown in
+binary for instruction inspection.
+
+## C6461 Assembler - Part 0
 
 ## Overview
 This is the assembler component for the C6461 Computer Architecture project. The assembler translates human-readable 
 assembly language into machine code that can be executed by the C6461 simulator.
 
-## Quick Start
+## Assembler Quick Start
 This project includes a runnable JAR file contained in the `build` directory. To run, the user must include an input 
 file as well as an output file. Test files have been provided in the `data` directory following the C6461 ISA 
 documentation.
@@ -108,34 +157,3 @@ directives.
 - `LOC n` - Set location counter to n (decimal)
 - `Data n` - Allocate word with value n (decimal)
 - `Data labelname` - Allocate word with address of label
-
-## C6461 src.Simulator - Part 1
-
-## Overview
-This is the Simulator component for the CSCI 6461 Computer Architecture project.
-It provides a Java Swing–based user interface that allows users to:
-1. View and modify CPU registers (GPRs, Index Registers, PC, MAR, MBR, IR)
-2. Enter octal input and load values into registers
-3. Load and execute assembled programs using IPL, Step, and Run controls
-4. Monitor the current instruction in both octal and binary formats
-5. Interact with and observe the internal state of the simulated machine
-The simulator connects with the assembler output and serves as the main execution and testing interface for CSCI 6461 assembly programs.
-
-## Quick Start
-This project includes a runnable JAR file contained in the `build` directory. To run, the user must include an input 
-file as well as an output file. Test files have been provided in the `data` directory following the C6461 ISA 
-documentation.
-
-To run the simulator, execute the following command from the root directory:
-```
-java -jar build/simulator/low-level-simulator.jar
-```
-
-To test the simulator, execute the following command:
-```
-java -jar build/simulator/low-level-simulator.jar/data/load_store_test.txt
-```
-
-## Implementation Notes - Part 1
-
-Part 1 implements the ComputerSimulatorGUI, a Java Swing interface that connects to the Computer class to control and observe the CSCI 6461 machine simulator. It displays CPU registers (R0–R3, X1–X3, PC, MAR, MBR, IR) in octal format and allows manual register loading using octal input. The GUI supports program loading through IPL, which assembles a source file and initializes memory, and provides execution control via Step and Run functions. The IR is also shown in binary for instruction inspection
