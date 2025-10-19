@@ -232,6 +232,10 @@ public class ComputerSimulatorGUI extends JFrame {
         stepBtn.addActionListener(e -> step());
         runBtn.addActionListener(e -> run());
         haltBtn.addActionListener(e -> halt());
+        loadBtn.addActionListener(e -> load());
+        storeBtn.addActionListener(e -> store());
+        storePlusBtn.addActionListener(e -> storePlus());
+        loadPlusBtn.addActionListener(e -> loadPlus());
 
         panel.add(loadBtn);
         panel.add(runBtn);
@@ -264,7 +268,7 @@ public class ComputerSimulatorGUI extends JFrame {
         field.setBackground(Color.WHITE);
         field.setForeground(Color.BLACK);
         field.setText("0");
-        field.setPreferredSize(new Dimension(500, 25));
+//        field.setPreferredSize(new Dimension(500, 25));
         return field;
     }
 
@@ -282,69 +286,91 @@ public class ComputerSimulatorGUI extends JFrame {
         return btn;
     }
 
-    private void loadToGPR(int index) {
+    /**
+     * Validate and parse octal input, ensuring it fits in 16 bits
+     * @return the parsed value, or -1 if invalid
+     */
+    private int validateAndParseOctal() {
         try {
             String octal = octalInput.getText().trim();
             int value = Integer.parseInt(octal, 8);
-            computer.cpu.R[index] = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into R" + index);
+
+            if (value < 0 || value > 0xFFFF) {
+                JOptionPane.showMessageDialog(this,
+                        "Value must be between 0 and 177777 (octal)",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                return -1;
+            }
+
+            return value;
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
+            return -1;
         }
+    }
+
+    private void loadToGPR(int index) {
+        int value = validateAndParseOctal();
+        if (value == -1) return;
+
+        computer.cpu.R[index] = (short) value;
+        updateDisplay();
+        JOptionPane.showMessageDialog(this,
+                "Loaded " + String.format("%06o", value) + " (octal) = " + value + " (decimal) into R" + index);
     }
 
     private void loadToIXR(int index) {
-        try {
-            String octal = octalInput.getText().trim();
-            int value = Integer.parseInt(octal, 8);
-            computer.cpu.IX[index] = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into X" + index);
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        int value = validateAndParseOctal();
+        if (value == -1) return;
+
+        computer.cpu.IX[index] = (short) value;
+        updateDisplay();
+        JOptionPane.showMessageDialog(this,
+                "Loaded " + String.format("%06o", value) + " (octal) = " + value + " (decimal) into X" + index);
     }
 
     private void loadToPC() {
-        try {
-            String octal = octalInput.getText().trim();
-            int value = Integer.parseInt(octal, 8);
-            computer.cpu.PC = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into PC");
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        int value = validateAndParseOctal();
+        if (value == -1) return;
+
+        computer.cpu.PC = (short) value;
+        updateDisplay();
+        JOptionPane.showMessageDialog(this,
+                "Loaded " + String.format("%06o", value) + " (octal) = " + value + " (decimal) into PC");
     }
 
     private void loadToMAR() {
-        try {
-            String octal = octalInput.getText().trim();
-            int value = Integer.parseInt(octal, 8);
-            computer.cpu.MAR = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into MAR");
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        int value = validateAndParseOctal();
+        if (value == -1) return;
+
+        computer.cpu.MAR = (short) value;
+        updateDisplay();
+        JOptionPane.showMessageDialog(this,
+                "Loaded " + String.format("%06o", value) + " (octal) = " + value + " (decimal) into MAR");
     }
 
     private void loadToMBR() {
-        try {
-            String octal = octalInput.getText().trim();
-            int value = Integer.parseInt(octal, 8);
-            computer.cpu.MBR = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into MBR");
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        int value = validateAndParseOctal();
+        if (value == -1) return;
+
+        computer.cpu.MBR = (short) value;
+        updateDisplay();
+        JOptionPane.showMessageDialog(this,
+                "Loaded " + String.format("%06o", value) + " (octal) = " + value + " (decimal) into MBR");
+    }
+
+    private void load() {
+        int value = validateAndParseOctal();
+        if (value == -1) return;
+
+        int address = computer.cpu.MAR & 0xFFFF;
+
+        computer.memory.write(address, (short) value);
+        computer.cpu.MBR = (short) value;
+
+        updateDisplay();
+        JOptionPane.showMessageDialog(this,
+                "Loaded " + String.format("%06o", value) + " (octal) into Memory[" + address + "]");
     }
 
     private void ipl() {
@@ -373,6 +399,28 @@ public class ComputerSimulatorGUI extends JFrame {
     private void halt() {
         updateDisplay();
         JOptionPane.showMessageDialog(this, "Halted!");
+    }
+
+    private void store() {
+        int address = computer.cpu.MAR & 0xFFFF;
+        short value = computer.memory.read(address);
+        computer.cpu.MBR = value;
+
+        updateDisplay();
+        JOptionPane.showMessageDialog(this,
+                "Stored Memory[" + address + "] = " + String.format("%06o", value & 0xFFFF) + " (octal) into MBR");
+    }
+
+    private void loadPlus() {
+        load();
+        computer.cpu.MAR++;
+        updateDisplay();
+    }
+
+    private void storePlus() {
+        store();
+        computer.cpu.MAR++;
+        updateDisplay();
     }
     
     /** Refresh all register fields and the IR binary view (octal formatting). */
