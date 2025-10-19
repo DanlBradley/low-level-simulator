@@ -23,7 +23,8 @@ public class ComputerSimulatorGUI extends JFrame {
         assemblyFileField.setText("data/load_store_test.txt");
         updateDisplay();
     }
-
+    
+    /** Layout: title → registers → controls → program path */
     private void setupUI() {
         setTitle("CSCI 6461 Machine Simulator");
         setSize(900, 600);
@@ -65,7 +66,8 @@ public class ComputerSimulatorGUI extends JFrame {
 
         return panel;
     }
-
+    
+    /** Registers grid + tiny load buttons (load OCTAL INPUT into that register) */
     private JPanel createRegistersPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(false);
@@ -170,7 +172,8 @@ public class ComputerSimulatorGUI extends JFrame {
 
         return panel;
     }
-
+    
+    /** IR (binary), OCTAL INPUT field, and main buttons */
     private JPanel createControlsPanel() {
         JPanel panel = new JPanel();
         panel.setOpaque(false);
@@ -204,7 +207,11 @@ public class ComputerSimulatorGUI extends JFrame {
 
         return panel;
     }
-
+    
+    /** Main controls:
+     *  IPL (assemble+load), Step (1 instr), Run (to HALT), Halt,
+     *  Load/Store (M[MAR]↔MBR), Load+/Store+ (then MAR++).
+     */
     private JPanel createButtonsPanel() {
         JPanel panel = new JPanel(new GridLayout(3, 3, 5, 5));
         panel.setOpaque(false);
@@ -240,7 +247,8 @@ public class ComputerSimulatorGUI extends JFrame {
 
         return panel;
     }
-
+    
+    /** Program path used by IPL */
     private JPanel createProgramPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panel.setOpaque(false);
@@ -366,7 +374,8 @@ public class ComputerSimulatorGUI extends JFrame {
         updateDisplay();
         JOptionPane.showMessageDialog(this, "Halted!");
     }
-
+    
+    /** Refresh all register fields and the IR binary view (octal formatting). */
     private void updateDisplay() {
         for (int i = 0; i < 4; i++) {
             gprFields[i].setText(String.format("%06o", computer.cpu.R[i] & 0xFFFF));
@@ -383,7 +392,8 @@ public class ComputerSimulatorGUI extends JFrame {
 
         updateBinaryDisplay();
     }
-
+    
+    /** IR → 16-bit binary string grouped by 4 */
     private void updateBinaryDisplay() {
         int ir = computer.cpu.IR & 0xFFFF;
         String binary = String.format("%16s", Integer.toBinaryString(ir)).replace(' ', '0');
