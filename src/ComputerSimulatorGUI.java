@@ -6,10 +6,9 @@ import java.awt.*;
 public class ComputerSimulatorGUI extends JFrame {
     private Computer computer;
 
-    private JTextField[] gprFields = new JTextField[4];
-    private JTextField[] ixrFields = new JTextField[4];
+    private final JTextField[] gprFields = new JTextField[4];
+    private final JTextField[] ixrFields = new JTextField[4];
     private JTextField pcField, marField, mbrField, irField;
-    private JTextField ccField, mfrField;
 
     private JTextArea binaryDisplay;
 
@@ -67,7 +66,7 @@ public class ComputerSimulatorGUI extends JFrame {
         return panel;
     }
     
-    /** Registers grid + tiny load buttons (load OCTAL INPUT into that register) */
+    /** Registers grid plus tiny load buttons (load OCTAL INPUT into that register) */
     private JPanel createRegistersPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(false);
@@ -91,7 +90,7 @@ public class ComputerSimulatorGUI extends JFrame {
             gbc.gridx = 2;
             int regIndex = i;
             JButton btn = createSmallButton();
-            btn.addActionListener(e -> loadToGPR(regIndex));
+            btn.addActionListener(_ -> loadToGPR(regIndex));
             panel.add(btn, gbc);
         }
 
@@ -110,7 +109,7 @@ public class ComputerSimulatorGUI extends JFrame {
             gbc.gridx = 5;
             int ixIndex = i;
             JButton btn = createSmallButton();
-            btn.addActionListener(e -> loadToIXR(ixIndex));
+            btn.addActionListener(_ -> loadToIXR(ixIndex));
             panel.add(btn, gbc);
         }
 
@@ -122,7 +121,7 @@ public class ComputerSimulatorGUI extends JFrame {
         panel.add(pcField, gbc);
         gbc.gridy = 2;
         JButton pcBtn = createSmallButton();
-        pcBtn.addActionListener(e -> loadToPC());
+        pcBtn.addActionListener(_ -> loadToPC());
         panel.add(pcBtn, gbc);
 
         gbc.gridy = 0;
@@ -133,7 +132,7 @@ public class ComputerSimulatorGUI extends JFrame {
         panel.add(marField, gbc);
         gbc.gridy = 2;
         JButton marBtn = createSmallButton();
-        marBtn.addActionListener(e -> loadToMAR());
+        marBtn.addActionListener(_ -> loadToMAR());
         panel.add(marBtn, gbc);
 
         gbc.gridy = 0;
@@ -144,7 +143,7 @@ public class ComputerSimulatorGUI extends JFrame {
         panel.add(mbrField, gbc);
         gbc.gridy = 2;
         JButton mbrBtn = createSmallButton();
-        mbrBtn.addActionListener(e -> loadToMBR());
+        mbrBtn.addActionListener(_ -> loadToMBR());
         panel.add(mbrBtn, gbc);
 
         gbc.gridy = 0;
@@ -158,7 +157,7 @@ public class ComputerSimulatorGUI extends JFrame {
         gbc.gridx = 8;
         panel.add(new JLabel("CC"), gbc);
         gbc.gridy = 4;
-        ccField = new JTextField("OUDE", 18);
+        JTextField ccField = new JTextField("OUDE", 18);
         ccField.setEditable(false);
         panel.add(ccField, gbc);
 
@@ -166,7 +165,7 @@ public class ComputerSimulatorGUI extends JFrame {
         gbc.gridx = 10;
         panel.add(new JLabel("MFR"), gbc);
         gbc.gridy = 4;
-        mfrField = new JTextField("MOTR", 18);
+        JTextField mfrField = new JTextField("MOTR", 18);
         mfrField.setEditable(false);
         panel.add(mfrField, gbc);
 
@@ -228,14 +227,14 @@ public class ComputerSimulatorGUI extends JFrame {
 
         JButton storePlusBtn = createButton("Store+");
 
-        iplBtn.addActionListener(e -> ipl());
-        stepBtn.addActionListener(e -> step());
-        runBtn.addActionListener(e -> run());
-        haltBtn.addActionListener(e -> halt());
-        loadBtn.addActionListener(e -> load());
-        storeBtn.addActionListener(e -> store());
-        storePlusBtn.addActionListener(e -> storePlus());
-        loadPlusBtn.addActionListener(e -> loadPlus());
+        iplBtn.addActionListener(_ -> ipl());
+        stepBtn.addActionListener(_ -> step());
+        runBtn.addActionListener(_ -> run());
+        haltBtn.addActionListener(_ -> halt());
+        loadBtn.addActionListener(_ -> load());
+        storeBtn.addActionListener(_ -> store());
+        storePlusBtn.addActionListener(_ -> storePlus());
+        loadPlusBtn.addActionListener(_ -> loadPlus());
 
         panel.add(loadBtn);
         panel.add(runBtn);
@@ -365,7 +364,7 @@ public class ComputerSimulatorGUI extends JFrame {
 
         int address = computer.cpu.MAR & 0xFFFF;
 
-        computer.memory.write(address, (short) value);
+        computer.cache.write(address, (short) value);
         computer.cpu.MBR = (short) value;
 
         updateDisplay();
@@ -403,7 +402,7 @@ public class ComputerSimulatorGUI extends JFrame {
 
     private void store() {
         int address = computer.cpu.MAR & 0xFFFF;
-        short value = computer.memory.read(address);
+        short value = computer.cache.read(address);
         computer.cpu.MBR = value;
 
         updateDisplay();
