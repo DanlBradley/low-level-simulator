@@ -2,7 +2,7 @@ package src;
 
 public class Computer {
     CPU cpu;
-    Memory memory;
+    Cache cache;
     private boolean halted;
 
     private static final int LDR = 1;
@@ -15,7 +15,7 @@ public class Computer {
 
     public Computer() {
         cpu = new CPU();
-        memory = new Memory();
+        cache = new Cache();
         halted = false;
     }
 
@@ -30,10 +30,10 @@ public class Computer {
     public void IPL(String programFile, int startAddr) {
         System.out.println("IPL: Initial Program Load and reset\n");
         cpu.reset();
-        memory.reset();
+        cache.reset();
         halted = false;
 
-        ROMLoader.loadProgram(memory, programFile);
+        ROMLoader.loadProgram(cache, programFile);
         if(startAddr >= 0) {
             cpu.PC = (short)startAddr;
         } else {
@@ -54,7 +54,7 @@ public class Computer {
         //set MAR to the PC and MBR to the value stored at MAR. Then set the IR to the value stored at MBR.
         //Finally, increment the PC by one.
         cpu.MAR = cpu.PC;
-        cpu.MBR = memory.read(cpu.MAR);
+        cpu.MBR = cache.read(cpu.MAR);
         cpu.IR = cpu.MBR;
         cpu.PC++;
 
@@ -87,7 +87,7 @@ public class Computer {
             effectiveAddress += cpu.IX[ix];
         }
         if (ind == 1) {
-            effectiveAddress = memory.read(effectiveAddress);
+            effectiveAddress = cache.read(effectiveAddress);
         }
         return effectiveAddress;
     }
@@ -115,12 +115,12 @@ public class Computer {
                 break;
 
             case LDR:
-                cpu.R[reg] = memory.read(effectiveAddress);
+                cpu.R[reg] = cache.read(effectiveAddress);
                 System.out.println("LDR: R" + reg + " = M[" + effectiveAddress + "] = " + cpu.R[reg]);
                 break;
 
             case STR:
-                memory.write(effectiveAddress, cpu.R[reg]);
+                cache.write(effectiveAddress, cpu.R[reg]);
                 System.out.println("STR: M[" + effectiveAddress + "] = R" + reg + " = " + cpu.R[reg]);
                 break;
 
@@ -136,7 +136,7 @@ public class Computer {
 
             case LDX:
                 if(ix >= 1 && ix <= 3) {
-                    cpu.IX[ix] = memory.read(effectiveAddress);
+                    cpu.IX[ix] = cache.read(effectiveAddress);
                     System.out.println("LDX: X" + ix + " = M[" + effectiveAddress + "] = " + cpu.IX[ix]);
                 } else {
                     System.out.println("ERROR: Invalid index register " + ix + " for LDX");
@@ -144,7 +144,7 @@ public class Computer {
                 break;
             case STX:
                 if(ix >= 1 && ix <= 3) {
-                    memory.write(effectiveAddress, cpu.IX[ix]);
+                    cache.write(effectiveAddress, cpu.IX[ix]);
                     System.out.println("STX: M[" + effectiveAddress + "] = X" + ix + " = " + cpu.IX[ix]);
                 } else {
                     System.out.println("ERROR: Invalid index register " + ix + " for STX");

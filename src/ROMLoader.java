@@ -4,9 +4,10 @@ import java.util.Scanner;
 
 public class ROMLoader {
 
-    public static void loadProgram(Memory memory, String filename) {
+    public static void loadProgram(Cache cache, String filename) {
 
         try {
+            Memory memory = cache.getMemory();
             Scanner scanner = new Scanner(new File(filename));
             System.out.println("Loading ROM from file: " + filename);
             while(scanner.hasNextLine()) {
