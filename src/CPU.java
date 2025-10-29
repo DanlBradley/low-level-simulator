@@ -8,6 +8,7 @@ public class CPU {
     public short MAR;
     public short MBR;
     public short IR;
+    public byte CC;
     public short[] R;
     public short[] IX;
 
@@ -42,7 +43,7 @@ public class CPU {
     }
 
     /**
-     * Get the register from an instruction.
+     * Get the register from an instruction. Note: this can also be used for Rx
      * @param instruction
      * @return register (bits 9-8)
      */
@@ -52,13 +53,26 @@ public class CPU {
     }
 
     /**
-     * Get the index register from an instruction.
+     * Get the index register from an instruction. Note: this can also be used for Ry
      * @param instruction
      * @return index register (bits 7-6)
      */
     public int getIndexReg(short instruction) {
         int unsigned = instruction & 0xFFFF;
         return (unsigned >> 6) & 0x03;
+    }
+
+    public int getAL(short instruction) {
+        int unsigned = instruction & 0xFFFF;
+        return (unsigned >> 8) & 0x01;
+    }
+    public int getLR(short instruction) {
+        int unsigned = instruction & 0xFFFF;
+        return (unsigned >> 8) & 0x01;
+    }
+    public int getCount(short instruction) {
+        int unsigned = instruction & 0xFFFF;
+        return unsigned & 0x07;
     }
 
     /**

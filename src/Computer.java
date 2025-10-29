@@ -1,8 +1,8 @@
 package src;
 
 public class Computer {
-    CPU cpu;
-    Cache cache;
+    public CPU cpu;
+    public Cache cache;
     private boolean halted;
 
     private static final int LDR = 1;
@@ -11,7 +11,38 @@ public class Computer {
     private static final int HLT = 0;
     private static final int LDX = 33;  //41 octal is 33
     private static final int STX = 34;
+
+    //transfer instructions
     private static final int JZ =  8; //10 octal is 8
+    private static final int JNE =  9;
+    private static final int JCC =  10;
+    private static final int JMA =  11;
+    private static final int JSR =  12;
+    private static final int RFS =  13;
+    private static final int SOB =  14;
+    private static final int JGE =  15;
+
+    //arithmetic instructions
+    private static final int AMR =  4;
+    private static final int SMR =  5;
+    private static final int AIR =  6;
+    private static final int SIR =  7;
+
+    //register-register instructions
+    private static final int MLT =  56;
+    private static final int DVD =  57;
+    private static final int TRR =  58;
+    private static final int AND =  59;
+    private static final int ORR =  60;
+    private static final int NOT =  61;
+
+    //shift/rotate instructions
+    private static final int SRC =  25;
+    private static final int RRC =  26;
+
+    //io operations
+    private static final int IN =  49;
+    private static final int OUT =  50;
 
     public Computer() {
         cpu = new CPU();
@@ -42,6 +73,20 @@ public class Computer {
         System.out.println("PC set to " + cpu.PC);
     }
 
+    /**
+     * Runs thru all single steps.
+     */
+    public void run() {
+        System.out.println("\nRunning Program");
+        while(!halted) {
+            singleStep();
+        }
+        System.out.println("\nProgram execution completed");
+    }
+
+    /**
+     * The core "cycle" of the simulated computer.
+     */
     public void singleStep() {
         if(halted) {
             System.out.println("Computer is halted\n");
@@ -68,10 +113,15 @@ public class Computer {
         int ix = cpu.getIndexReg(cpu.IR);
         int indirect = cpu.getIndirect(cpu.IR);
         int address = cpu.getAddress(cpu.IR);
+        int al = cpu.getAL(cpu.IR);
+        int lr = cpu.getLR(cpu.IR);
+        int count = cpu.getCount(cpu.IR);
 
         // execute step
-        executeInstruction(opcode, reg, ix, indirect, address);
+        executeInstruction(opcode, reg, ix, al, lr, count, indirect, address);
     }
+
+
 
 
     /**
@@ -102,7 +152,7 @@ public class Computer {
      * @param indirect
      * @param address
      */
-    private void executeInstruction(int opcode, int reg, int ix, int indirect, int address) {
+    private void executeInstruction(int opcode, int reg, int ix, int al, int lr, int count, int indirect, int address) {
         int effectiveAddress = getEffectiveAddress(address, ix, indirect);
 
         String opcodeName = Encoder.getOpcodeName(opcode);
@@ -162,17 +212,218 @@ public class Computer {
                 }
                 break;
 
+            case JNE: //transfer instructions
+                if(cpu.R[reg] != 0) {
+                    cpu.PC = (short)effectiveAddress;
+                    System.out.println("JNE: R" + reg + " is NOT zero, jumping to " + effectiveAddress);
+                } else {
+                    System.out.println("JNE: R" + reg + " = " + cpu.R[reg] + " (zero), no jump");
+                }
+                break;
+            case JCC:
+                int ccBit = reg;
+                boolean bitSet = ((cpu.CC >> ccBit) & 1) == 1;
+
+                if (bitSet) {
+                    cpu.PC = (short)effectiveAddress;
+                    System.out.println("JCC: CC bit " + ccBit + " is 1, jumping to " + effectiveAddress);
+                } else {
+                    System.out.println("JCC: CC bit " + ccBit + " is 0, no jump");
+                }
+                break;
+            case JMA:
+                cpu.PC = (short)effectiveAddress;
+                System.out.println("JMA: jumping to " + effectiveAddress);
+                break;
+            case JSR:
+                cpu.R[3] = cpu.PC;
+                cpu.PC = (short)effectiveAddress;
+                System.out.println("JSR: jumping to " + effectiveAddress);
+                break;
+            case RFS:
+                cpu.R[0] = (short)address;
+                cpu.PC = cpu.R[3];
+                System.out.println("RFS: R0 = " + address + " (return code), PC = R3 = " + cpu.PC);
+                break;
+            case SOB:
+                cpu.R[reg] = (short)(cpu.R[reg] - 1);
+                if (cpu.R[reg] > 0) {
+                    cpu.PC = (short)effectiveAddress;
+                    System.out.println("SOB: R" + reg + " = " + cpu.R[reg] + " > 0, branching to " + effectiveAddress);
+                } else {
+                    System.out.println("SOB: R" + reg + " = " + cpu.R[reg] + " <= 0, continuing to PC: " + cpu.PC);
+                }
+                break;
+            case JGE:
+                if (cpu.R[reg] >= 0) {
+                    cpu.PC = (short)effectiveAddress;
+                    System.out.println("JGE: R" + reg + " = " + cpu.R[reg] + " >= 0, branching to " + effectiveAddress);
+                } else {
+                    System.out.println("JGE: R" + reg + " = " + cpu.R[reg] + " < 0, continuing to PC: " + cpu.PC);
+                }
+                break;
+
+            case AMR: //arithmetic/logical instructions
+                cpu.R[reg] = (short)(cpu.R[reg] + cache.read(effectiveAddress));
+                System.out.println("AMR: R" + reg + " = R" + reg + " + M[" + effectiveAddress + "] = " + cpu.R[reg]);
+                break;
+            case SMR: //subtract memory from register
+                cpu.R[reg] = (short)(cpu.R[reg] - cache.read(effectiveAddress));
+                System.out.println("SMR: R" + reg + " = R" + reg + " - M[" + effectiveAddress + "] = " + cpu.R[reg]);
+                break;
+            case AIR: //add immediate to register
+                cpu.R[reg] = (short)(cpu.R[reg] + (short)address);
+                System.out.println("AIR: R" + reg + " = R" + reg + " + " + address + " = " + cpu.R[reg]);
+                break;
+            case SIR: //sub imm from register
+                cpu.R[reg] = (short)(cpu.R[reg] - (short)address);
+                System.out.println("SIR: R" + reg + " = R" + reg + " - " + address + " = " + cpu.R[reg]);
+                break;
+
+            case MLT: // register-register instructions section - multiply
+                if ((reg == 0 || reg == 2) && (ix == 0 || ix == 2)) {
+                    int result = cpu.R[reg] * cpu.R[ix];
+
+                    // split result
+                    cpu.R[reg] = (short)(result >> 16);
+                    cpu.R[reg + 1] = (short)(result & 0xFFFF);
+
+                    // check overflow
+                    if (result > Short.MAX_VALUE || result < Short.MIN_VALUE) {
+                        cpu.CC |= 1;
+                    }
+
+                    System.out.println("MLT: R" + reg + " * R" + ix + " = " + result +
+                            " -> R" + reg + "=" + cpu.R[reg] +
+                            ", R" + (reg+1) + "=" + cpu.R[reg+1]);
+                } else {
+                    System.out.println("ERROR: MLT requires rx and ry to be 0 or 2");
+                }
+                break;
+            case DVD:
+                if (cpu.R[ix] == 0) { //DIVZERO: cpu.cc = 0100 || cpu.CC
+                    cpu.CC |= 4;
+                    break;
+                }
+                if ((reg == 0 || reg == 2) && (ix == 0 || ix == 2)) {
+                    var quotient = (short)(cpu.R[reg] / cpu.R[ix]);
+                    var remainder = (short)(cpu.R[reg] % cpu.R[ix]);
+                    cpu.R[reg] = quotient;
+                    cpu.R[reg+1] = remainder;
+                } else {
+                    System.out.println("ERROR: DVD requires rx and ry to be 0 or 2");
+                }
+                break;
+            case TRR:
+                if (cpu.R[reg] == cpu.R[ix]) { // EQ: cpu.cc = 1000 || cpu.CC
+                    cpu.CC |= 0b1000;
+                    System.out.println("TRR: R" + reg + " == R" + ix + " (EQUAL)");
+                } else {
+                    cpu.CC &= ~0b1000; //set 0 for not eq.
+                    System.out.println("TRR: R" + reg + " != R" + ix + " (NOT EQUAL)");
+                }
+                break;
+            case AND:
+                cpu.R[reg] = (short)(cpu.R[reg] & cpu.R[ix]);
+                System.out.println("AND: R" + reg + " & R" + ix + " = " + cpu.R[reg]);
+                break;
+            case ORR:
+                cpu.R[reg] = (short)(cpu.R[reg] | cpu.R[ix]);
+                System.out.println("ORR: R" + reg + " | R" + ix + " = " + cpu.R[reg]);
+                break;
+            case NOT:
+                cpu.R[reg] = (short)(~cpu.R[reg]);
+                System.out.println("NOT: ~R" + reg + " = " + cpu.R[reg]);
+                break;
+
+            case SRC: //shift/rotate instructions
+                //c(r) is shifted left (lr == 1) or right (lr == 0) either logically (al == 1) or arithmetically (al == 0)
+                //count is the number of bits to shift (0-7)
+                if (count == 0) {
+                    System.out.println("SRC: R" + reg + " no shift (count=0)");
+                    break;
+                }
+
+                if (lr == 1) {
+                    //shift left, al == 1: logical (arithmetic and logical the same for left shift)
+                    int original = cpu.R[reg] & 0xFFFF;
+                    cpu.R[reg] = (short)(cpu.R[reg] << count);
+
+                    int mask = 0xFFFF << (16 - count);
+                    if ((original & mask) != 0) {
+                        cpu.CC |= 1; //overflow
+                        System.out.println("SRC: R" + reg + " overflow");
+                    } else {
+                        System.out.println("SRC: R" + reg + " << " + count + " = " + cpu.R[reg]);
+                    }
+                } else {
+                    //shift right, al == 1: logical
+                    int original = cpu.R[reg] & 0xFFFF;
+                    int mask = (1 << count) - 1;
+                    if (al == 1) {
+                        cpu.R[reg] = (short)(original >>> count);
+                    } else {
+                        //for right shift, arithmetic is different -- "march" the sign bit
+                        cpu.R[reg] = (short)(cpu.R[reg] >> count);
+                    }
+                    if ((original & mask) != 0) {
+                        cpu.CC |= 2;
+                        String op = (al == 1) ? ">>>" : ">>";
+                        System.out.println("SRC: R" + reg + " " + op + " " + count + " = " + cpu.R[reg] + " (UNDERFLOW)");
+                    } else {
+                        System.out.println("SRC: R" + reg + " >> " + count + " = " + cpu.R[reg]);
+                    }
+                }
+                break;
+
+            case RRC: //rotate instructions
+                //c(r) is rotated left (lr == 1) or right (lr == 0) logically
+                //count is the number of bits to rotate (0-15)
+
+                if (count == 0) {
+                    System.out.println("RRC: R" + reg + " no rotation (count=0)");
+                    break;
+                }
+
+                int value = cpu.R[reg] & 0xFFFF; // treat as unsigned 16-bit
+
+                if (lr == 1) {
+                    // for ex: 0b10110011 rotated left by 2: 0b11001110
+                    value = ((value << count) | (value >>> (16 - count))) & 0xFFFF;
+                    cpu.R[reg] = (short) value;
+                    System.out.println("RRC: R" + reg + " rotated left by " + count + " = " + cpu.R[reg]);
+                } else {
+                    // for ex: 0b10110011 rotated right by 2: 0b11101100
+                    value = ((value >>> count) | (value << (16 - count))) & 0xFFFF;
+                    cpu.R[reg] = (short) value;
+                    System.out.println("RRC: R" + reg + " rotated right by " + count + " = " + cpu.R[reg]);
+                }
+                break;
+
+            case IN:
+                if (address == 0) {
+                    System.out.print("IN: Enter character for R" + reg + ": ");
+                } else if (address == 2) {
+                    System.out.println("IN: Reading from card reader to R" + reg);
+                } else {
+                    System.out.println("IN: Device " + address + " not implemented");
+                }
+                break;
+
+            case OUT:
+
+                if (address == 1) {
+                    char ch = (char)(cpu.R[reg] & 0xFF);
+                    System.out.println("OUT: R" + reg + " -> Console: '" + ch + "'");
+                } else {
+                    System.out.println("OUT: Device " + address + " not implemented");
+                }
+                break;
+
+
             default:
                 System.out.println("Unknown opcode: " + opcode);
                 halted = true;
         }
-    }
-
-    public void run() {
-        System.out.println("\nRunning Program");
-        while(!halted) {
-            singleStep();
-        }
-        System.out.println("\nProgram execution completed");
     }
 }
