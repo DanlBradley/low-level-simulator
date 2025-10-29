@@ -74,7 +74,6 @@ public class ComputerSimulatorGUI extends JFrame {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 60;
-
         gbc.gridx = 0; gbc.gridy = 0;
         panel.add(new JLabel("GPR"), gbc);
 
