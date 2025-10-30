@@ -164,4 +164,12 @@ public class Computer {
         }
         System.out.println("Program execution completed");
     }
+
+    public CPU getCPU() {
+        return cpu;
+    }
+
+    public Memory getMemory() {
+        return memory;
+    }
 }
