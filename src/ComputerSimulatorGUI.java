@@ -12,10 +12,12 @@ public class ComputerSimulatorGUI extends JFrame {
     private JTextField ccField, mfrField;
 
     private JTextArea binaryDisplay;
-
     private JTextField octalInput;
-
     private JTextField programFileField;
+
+    private JTextArea cacheDisplay;
+    private JTextArea printerOutput;
+    private JTextField consoleInputField;
 
     public ComputerSimulatorGUI() {
         computer = new Computer();
@@ -26,7 +28,7 @@ public class ComputerSimulatorGUI extends JFrame {
 
     private void setupUI() {
         setTitle("CSCI 6461 Machine Simulator");
-        setSize(900, 600);
+        setSize(1200, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
 
@@ -37,6 +39,9 @@ public class ComputerSimulatorGUI extends JFrame {
 
         JPanel centerPanel = createCenterPanel();
         mainPanel.add(centerPanel, BorderLayout.CENTER);
+
+        JPanel rightPanel = createRightPanel();
+        mainPanel.add(rightPanel, BorderLayout.EAST);
 
         add(mainPanel);
     }
@@ -64,6 +69,66 @@ public class ComputerSimulatorGUI extends JFrame {
         panel.add(programPanel);
 
         return panel;
+    }
+
+    private JPanel createRightPanel() {
+        JPanel rightPanel = new JPanel();
+        rightPanel.setOpaque(false);
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        rightPanel.setPreferredSize(new Dimension(400, 0));
+        rightPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+
+        JLabel cacheLabel = new JLabel("Cache Content");
+        cacheLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        cacheLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        rightPanel.add(cacheLabel);
+        rightPanel.add(Box.createVerticalStrut(5));
+
+        cacheDisplay = new JTextArea(12, 35);
+        cacheDisplay.setEditable(false);
+        cacheDisplay.setBackground(Color.WHITE);
+        cacheDisplay.setFont(new Font("Monospaced", Font.PLAIN, 10));
+        JScrollPane cacheScroll = new JScrollPane(cacheDisplay);
+        cacheScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        cacheScroll.setPreferredSize(new Dimension(380, 200));
+        cacheScroll.setMaximumSize(new Dimension(380, 200));
+        rightPanel.add(cacheScroll);
+
+        rightPanel.add(Box.createVerticalStrut(15));
+
+        JLabel printerLabel = new JLabel("Printer");
+        printerLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        printerLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        rightPanel.add(printerLabel);
+        rightPanel.add(Box.createVerticalStrut(5));
+
+        printerOutput = new JTextArea(10, 35);
+        printerOutput.setEditable(false);
+        printerOutput.setBackground(Color.WHITE);
+        printerOutput.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JScrollPane printerScroll = new JScrollPane(printerOutput);
+        printerScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        printerScroll.setPreferredSize(new Dimension(380, 180));
+        printerScroll.setMaximumSize(new Dimension(380, 180));
+        rightPanel.add(printerScroll);
+
+        rightPanel.add(Box.createVerticalStrut(15));
+
+        JLabel consoleLabel = new JLabel("Console Input");
+        consoleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        consoleLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        rightPanel.add(consoleLabel);
+        rightPanel.add(Box.createVerticalStrut(5));
+
+        consoleInputField = new JTextField(35);
+        consoleInputField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        consoleInputField.setMaximumSize(new Dimension(380, 30));
+        consoleInputField.setPreferredSize(new Dimension(380, 30));
+        rightPanel.add(consoleInputField);
+
+        rightPanel.add(Box.createVerticalGlue());
+
+        return rightPanel;
     }
 
     private JPanel createRegistersPanel() {
@@ -112,7 +177,6 @@ public class ComputerSimulatorGUI extends JFrame {
             panel.add(btn, gbc);
         }
 
-        // PC, MAR, MBR, IR
         gbc.gridx = 6; gbc.gridy = 0;
         panel.add(new JLabel("PC"), gbc);
         gbc.gridy = 1;
@@ -288,7 +352,7 @@ public class ComputerSimulatorGUI extends JFrame {
         try {
             String octal = octalInput.getText().trim();
             int value = Integer.parseInt(octal, 8);
-            computer.cpu.R[index] = (short) value;
+            computer.getCPU().R[index] = (short) value;
             updateDisplay();
             JOptionPane.showMessageDialog(this,
                     "Loaded " + octal + " (octal) = " + value + " (decimal) into R" + index);
@@ -301,7 +365,7 @@ public class ComputerSimulatorGUI extends JFrame {
         try {
             String octal = octalInput.getText().trim();
             int value = Integer.parseInt(octal, 8);
-            computer.cpu.IX[index] = (short) value;
+            computer.getCPU().IX[index] = (short) value;
             updateDisplay();
             JOptionPane.showMessageDialog(this,
                     "Loaded " + octal + " (octal) = " + value + " (decimal) into X" + index);
@@ -314,7 +378,7 @@ public class ComputerSimulatorGUI extends JFrame {
         try {
             String octal = octalInput.getText().trim();
             int value = Integer.parseInt(octal, 8);
-            computer.cpu.PC = (short) value;
+            computer.getCPU().PC = (short) value;
             updateDisplay();
             JOptionPane.showMessageDialog(this,
                     "Loaded " + octal + " (octal) = " + value + " (decimal) into PC");
@@ -327,7 +391,7 @@ public class ComputerSimulatorGUI extends JFrame {
         try {
             String octal = octalInput.getText().trim();
             int value = Integer.parseInt(octal, 8);
-            computer.cpu.MAR = (short) value;
+            computer.getCPU().MAR = (short) value;
             updateDisplay();
             JOptionPane.showMessageDialog(this,
                     "Loaded " + octal + " (octal) = " + value + " (decimal) into MAR");
@@ -340,7 +404,7 @@ public class ComputerSimulatorGUI extends JFrame {
         try {
             String octal = octalInput.getText().trim();
             int value = Integer.parseInt(octal, 8);
-            computer.cpu.MBR = (short) value;
+            computer.getCPU().MBR = (short) value;
             updateDisplay();
             JOptionPane.showMessageDialog(this,
                     "Loaded " + octal + " (octal) = " + value + " (decimal) into MBR");
@@ -375,23 +439,24 @@ public class ComputerSimulatorGUI extends JFrame {
 
     private void updateDisplay() {
         for (int i = 0; i < 4; i++) {
-            gprFields[i].setText(String.format("%06o", computer.cpu.R[i] & 0xFFFF));
+            gprFields[i].setText(String.format("%06o", computer.getCPU().R[i] & 0xFFFF));
         }
 
         for (int i = 1; i <= 3; i++) {
-            ixrFields[i].setText(String.format("%06o", computer.cpu.IX[i] & 0xFFFF));
+            ixrFields[i].setText(String.format("%06o", computer.getCPU().IX[i] & 0xFFFF));
         }
 
-        pcField.setText(String.format("%06o", computer.cpu.PC & 0xFFFF));
-        marField.setText(String.format("%06o", computer.cpu.MAR & 0xFFFF));
-        mbrField.setText(String.format("%06o", computer.cpu.MBR & 0xFFFF));
-        irField.setText(String.format("%06o", computer.cpu.IR & 0xFFFF));
+        pcField.setText(String.format("%06o", computer.getCPU().PC & 0xFFFF));
+        marField.setText(String.format("%06o", computer.getCPU().MAR & 0xFFFF));
+        mbrField.setText(String.format("%06o", computer.getCPU().MBR & 0xFFFF));
+        irField.setText(String.format("%06o", computer.getCPU().IR & 0xFFFF));
 
         updateBinaryDisplay();
+        updateCacheDisplay();
     }
 
     private void updateBinaryDisplay() {
-        int ir = computer.cpu.IR & 0xFFFF;
+        int ir = computer.getCPU().IR & 0xFFFF;
         String binary = String.format("%16s", Integer.toBinaryString(ir)).replace(' ', '0');
 
         StringBuilder formatted = new StringBuilder();
@@ -401,6 +466,34 @@ public class ComputerSimulatorGUI extends JFrame {
         }
 
         binaryDisplay.setText(formatted.toString());
+    }
+
+    private void updateCacheDisplay() {
+        StringBuilder cache = new StringBuilder();
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                int address = row * 8 + col;
+                short value = computer.getMemory().read(address);
+                cache.append(String.format("%03o %06o ", address, value & 0xFFFF));
+            }
+            cache.append("\n");
+        }
+
+        cacheDisplay.setText(cache.toString());
+    }
+
+    public void printToOutput(String text) {
+        printerOutput.append(text + "\n");
+        printerOutput.setCaretPosition(printerOutput.getDocument().getLength());
+    }
+
+    public String getConsoleInput() {
+        return consoleInputField.getText();
+    }
+
+    public void clearConsoleInput() {
+        consoleInputField.setText("");
     }
 
     public static void main(String[] args) {
