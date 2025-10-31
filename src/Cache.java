@@ -3,6 +3,7 @@ package src;
 import java.util.LinkedHashMap;
 
 public class Cache {
+    // 1st value is the address, 2nd value is the data
     private final LinkedHashMap<Short, Short> cacheMap;
     private static final int CACHE_SIZE = 16;
     private final Memory memory = new Memory();

@@ -2,6 +2,7 @@ package src;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
 
 public class ComputerSimulatorGUI extends JFrame {
     private Computer computer;
@@ -9,11 +10,15 @@ public class ComputerSimulatorGUI extends JFrame {
     private final JTextField[] gprFields = new JTextField[4];
     private final JTextField[] ixrFields = new JTextField[4];
     private JTextField pcField, marField, mbrField, irField;
+    private JTextField ccField, mfrField;
 
     private JTextArea binaryDisplay;
 
     private JTextField octalInput;
 
+    private JTextArea cacheDisplay;
+    private JTextArea printerOutput;
+    private JTextField consoleInputField;
     private JTextField assemblyFileField;
 
     public ComputerSimulatorGUI() {
@@ -22,11 +27,10 @@ public class ComputerSimulatorGUI extends JFrame {
         assemblyFileField.setText("data/load_store_test.txt");
         updateDisplay();
     }
-    
-    /** Layout: title → registers → controls → program path */
+
     private void setupUI() {
         setTitle("CSCI 6461 Machine Simulator");
-        setSize(900, 600);
+        setSize(1200, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
 
@@ -37,6 +41,9 @@ public class ComputerSimulatorGUI extends JFrame {
 
         JPanel centerPanel = createCenterPanel();
         mainPanel.add(centerPanel, BorderLayout.CENTER);
+
+        JPanel rightPanel = createRightPanel();
+        mainPanel.add(rightPanel, BorderLayout.EAST);
 
         add(mainPanel);
     }
@@ -65,15 +72,74 @@ public class ComputerSimulatorGUI extends JFrame {
 
         return panel;
     }
-    
-    /** Registers grid plus tiny load buttons (load OCTAL INPUT into that register) */
+
+    private JPanel createRightPanel() {
+        JPanel rightPanel = new JPanel();
+        rightPanel.setOpaque(false);
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        rightPanel.setPreferredSize(new Dimension(400, 0));
+        rightPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+
+        JLabel cacheLabel = new JLabel("Cache Content");
+        cacheLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        cacheLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        rightPanel.add(cacheLabel);
+        rightPanel.add(Box.createVerticalStrut(5));
+
+        cacheDisplay = new JTextArea(12, 35);
+        cacheDisplay.setEditable(false);
+        cacheDisplay.setBackground(Color.WHITE);
+        cacheDisplay.setFont(new Font("Monospaced", Font.PLAIN, 10));
+        JScrollPane cacheScroll = new JScrollPane(cacheDisplay);
+        cacheScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        cacheScroll.setPreferredSize(new Dimension(380, 200));
+        cacheScroll.setMaximumSize(new Dimension(380, 200));
+        rightPanel.add(cacheScroll);
+
+        rightPanel.add(Box.createVerticalStrut(15));
+
+        JLabel printerLabel = new JLabel("Printer");
+        printerLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        printerLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        rightPanel.add(printerLabel);
+        rightPanel.add(Box.createVerticalStrut(5));
+
+        printerOutput = new JTextArea(10, 35);
+        printerOutput.setEditable(false);
+        printerOutput.setBackground(Color.WHITE);
+        printerOutput.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JScrollPane printerScroll = new JScrollPane(printerOutput);
+        printerScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        printerScroll.setPreferredSize(new Dimension(380, 180));
+        printerScroll.setMaximumSize(new Dimension(380, 180));
+        rightPanel.add(printerScroll);
+
+        rightPanel.add(Box.createVerticalStrut(15));
+
+        JLabel consoleLabel = new JLabel("Console Input");
+        consoleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        consoleLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        rightPanel.add(consoleLabel);
+        rightPanel.add(Box.createVerticalStrut(5));
+
+        consoleInputField = new JTextField(35);
+        consoleInputField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        consoleInputField.setMaximumSize(new Dimension(380, 30));
+        consoleInputField.setPreferredSize(new Dimension(380, 30));
+        rightPanel.add(consoleInputField);
+
+        rightPanel.add(Box.createVerticalGlue());
+
+        return rightPanel;
+    }
+
     private JPanel createRegistersPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.ipadx = 60;
+        gbc.ipadx = 40;
         gbc.gridx = 0; gbc.gridy = 0;
         panel.add(new JLabel("GPR"), gbc);
 
@@ -112,7 +178,6 @@ public class ComputerSimulatorGUI extends JFrame {
             panel.add(btn, gbc);
         }
 
-        // PC, MAR, MBR, IR
         gbc.gridx = 6; gbc.gridy = 0;
         panel.add(new JLabel("PC"), gbc);
         gbc.gridy = 1;
@@ -170,8 +235,7 @@ public class ComputerSimulatorGUI extends JFrame {
 
         return panel;
     }
-    
-    /** IR (binary), OCTAL INPUT field, and main buttons */
+
     private JPanel createControlsPanel() {
         JPanel panel = new JPanel();
         panel.setOpaque(false);
@@ -205,11 +269,7 @@ public class ComputerSimulatorGUI extends JFrame {
 
         return panel;
     }
-    
-    /** Main controls:
-     *  IPL (assemble+load), Step (1 instr), Run (to HALT), Halt,
-     *  Load/Store (M[MAR]↔MBR), Load+/Store+ (then MAR++).
-     */
+
     private JPanel createButtonsPanel() {
         JPanel panel = new JPanel(new GridLayout(3, 3, 5, 5));
         panel.setOpaque(false);
@@ -249,8 +309,7 @@ public class ComputerSimulatorGUI extends JFrame {
 
         return panel;
     }
-    
-    /** Program path used by IPL */
+
     private JPanel createProgramPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panel.setOpaque(false);
@@ -260,13 +319,22 @@ public class ComputerSimulatorGUI extends JFrame {
         return panel;
     }
 
+    private JTextField createRegisterField() {
+        JTextField field = new JTextField(12);
+        field.setEditable(false);
+        field.setBackground(Color.WHITE);
+        field.setForeground(Color.BLACK);
+        field.setText("0");
+        field.setPreferredSize(new Dimension(120, 25));
+        return field;
+    }
+
     private JTextField createWideRegisterField() {
         JTextField field = new JTextField(18);
         field.setEditable(false);
         field.setBackground(Color.WHITE);
         field.setForeground(Color.BLACK);
         field.setText("0");
-//        field.setPreferredSize(new Dimension(500, 25));
         return field;
     }
 
@@ -420,7 +488,7 @@ public class ComputerSimulatorGUI extends JFrame {
         computer.cpu.MAR++;
         updateDisplay();
     }
-    
+
     /** Refresh all register fields and the IR binary view (octal formatting). */
     private void updateDisplay() {
         for (int i = 0; i < 4; i++) {
@@ -437,9 +505,9 @@ public class ComputerSimulatorGUI extends JFrame {
         irField.setText(String.format("%06o", computer.cpu.IR & 0xFFFF));
 
         updateBinaryDisplay();
+        updateCacheDisplay();
     }
-    
-    /** IR → 16-bit binary string grouped by 4 */
+
     private void updateBinaryDisplay() {
         int ir = computer.cpu.IR & 0xFFFF;
         String binary = String.format("%16s", Integer.toBinaryString(ir)).replace(' ', '0');
@@ -451,6 +519,35 @@ public class ComputerSimulatorGUI extends JFrame {
         }
 
         binaryDisplay.setText(formatted.toString());
+    }
+
+    private void updateCacheDisplay() {
+        StringBuilder cache = new StringBuilder();
+
+        var cacheMap = computer.cache.getCacheMap();
+        int iter = 0;
+        for (Map.Entry<Short,Short> cacheLoc : cacheMap.entrySet()) {
+            iter++;
+            int address = cacheLoc.getKey() & 0xFFFF;
+            short value = cacheLoc.getValue();
+            cache.append(String.format("%03o %06o ", address, value & 0xFFFF));
+            if (iter % 5 == 0) cache.append("\n");
+        }
+
+        cacheDisplay.setText(cache.toString());
+    }
+
+    public void printToOutput(String text) {
+        printerOutput.append(text + "\n");
+        printerOutput.setCaretPosition(printerOutput.getDocument().getLength());
+    }
+
+    public String getConsoleInput() {
+        return consoleInputField.getText();
+    }
+
+    public void clearConsoleInput() {
+        consoleInputField.setText("");
     }
 
     public static void main(String[] args) {
