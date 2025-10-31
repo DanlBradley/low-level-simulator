@@ -2,6 +2,7 @@ package src;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
 
 public class ComputerSimulatorGUI extends JFrame {
     private Computer computer;
@@ -14,7 +15,6 @@ public class ComputerSimulatorGUI extends JFrame {
     private JTextArea binaryDisplay;
 
     private JTextField octalInput;
-    private JTextField programFileField;
 
     private JTextArea cacheDisplay;
     private JTextArea printerOutput;
@@ -25,7 +25,6 @@ public class ComputerSimulatorGUI extends JFrame {
         computer = new Computer();
         setupUI();
         assemblyFileField.setText("data/load_store_test.txt");
-        programFileField.setText("data/load.txt");
         updateDisplay();
     }
 
@@ -525,13 +524,14 @@ public class ComputerSimulatorGUI extends JFrame {
     private void updateCacheDisplay() {
         StringBuilder cache = new StringBuilder();
 
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                int address = row * 8 + col;
-                short value = computer.cache.read(address);
-                cache.append(String.format("%03o %06o ", address, value & 0xFFFF));
-            }
-            cache.append("\n");
+        var cacheMap = computer.cache.getCacheMap();
+        int iter = 0;
+        for (Map.Entry<Short,Short> cacheLoc : cacheMap.entrySet()) {
+            iter++;
+            int address = cacheLoc.getKey() & 0xFFFF;
+            short value = cacheLoc.getValue();
+            cache.append(String.format("%03o %06o ", address, value & 0xFFFF));
+            if (iter % 5 == 0) cache.append("\n");
         }
 
         cacheDisplay.setText(cache.toString());
