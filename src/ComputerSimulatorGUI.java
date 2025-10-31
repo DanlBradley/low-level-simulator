@@ -6,22 +6,25 @@ import java.awt.*;
 public class ComputerSimulatorGUI extends JFrame {
     private Computer computer;
 
-    private JTextField[] gprFields = new JTextField[4];
-    private JTextField[] ixrFields = new JTextField[4];
+    private final JTextField[] gprFields = new JTextField[4];
+    private final JTextField[] ixrFields = new JTextField[4];
     private JTextField pcField, marField, mbrField, irField;
     private JTextField ccField, mfrField;
 
     private JTextArea binaryDisplay;
+
     private JTextField octalInput;
     private JTextField programFileField;
 
     private JTextArea cacheDisplay;
     private JTextArea printerOutput;
     private JTextField consoleInputField;
+    private JTextField assemblyFileField;
 
     public ComputerSimulatorGUI() {
         computer = new Computer();
         setupUI();
+        assemblyFileField.setText("data/load_store_test.txt");
         programFileField.setText("data/load.txt");
         updateDisplay();
     }
@@ -138,7 +141,6 @@ public class ComputerSimulatorGUI extends JFrame {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 40;
-
         gbc.gridx = 0; gbc.gridy = 0;
         panel.add(new JLabel("GPR"), gbc);
 
@@ -154,7 +156,7 @@ public class ComputerSimulatorGUI extends JFrame {
             gbc.gridx = 2;
             int regIndex = i;
             JButton btn = createSmallButton();
-            btn.addActionListener(e -> loadToGPR(regIndex));
+            btn.addActionListener(_ -> loadToGPR(regIndex));
             panel.add(btn, gbc);
         }
 
@@ -173,7 +175,7 @@ public class ComputerSimulatorGUI extends JFrame {
             gbc.gridx = 5;
             int ixIndex = i;
             JButton btn = createSmallButton();
-            btn.addActionListener(e -> loadToIXR(ixIndex));
+            btn.addActionListener(_ -> loadToIXR(ixIndex));
             panel.add(btn, gbc);
         }
 
@@ -184,7 +186,7 @@ public class ComputerSimulatorGUI extends JFrame {
         panel.add(pcField, gbc);
         gbc.gridy = 2;
         JButton pcBtn = createSmallButton();
-        pcBtn.addActionListener(e -> loadToPC());
+        pcBtn.addActionListener(_ -> loadToPC());
         panel.add(pcBtn, gbc);
 
         gbc.gridy = 0;
@@ -195,7 +197,7 @@ public class ComputerSimulatorGUI extends JFrame {
         panel.add(marField, gbc);
         gbc.gridy = 2;
         JButton marBtn = createSmallButton();
-        marBtn.addActionListener(e -> loadToMAR());
+        marBtn.addActionListener(_ -> loadToMAR());
         panel.add(marBtn, gbc);
 
         gbc.gridy = 0;
@@ -206,7 +208,7 @@ public class ComputerSimulatorGUI extends JFrame {
         panel.add(mbrField, gbc);
         gbc.gridy = 2;
         JButton mbrBtn = createSmallButton();
-        mbrBtn.addActionListener(e -> loadToMBR());
+        mbrBtn.addActionListener(_ -> loadToMBR());
         panel.add(mbrBtn, gbc);
 
         gbc.gridy = 0;
@@ -220,7 +222,7 @@ public class ComputerSimulatorGUI extends JFrame {
         gbc.gridx = 8;
         panel.add(new JLabel("CC"), gbc);
         gbc.gridy = 4;
-        ccField = new JTextField("OUDE", 18);
+        JTextField ccField = new JTextField("OUDE", 18);
         ccField.setEditable(false);
         panel.add(ccField, gbc);
 
@@ -228,7 +230,7 @@ public class ComputerSimulatorGUI extends JFrame {
         gbc.gridx = 10;
         panel.add(new JLabel("MFR"), gbc);
         gbc.gridy = 4;
-        mfrField = new JTextField("MOTR", 18);
+        JTextField mfrField = new JTextField("MOTR", 18);
         mfrField.setEditable(false);
         panel.add(mfrField, gbc);
 
@@ -285,10 +287,14 @@ public class ComputerSimulatorGUI extends JFrame {
 
         JButton storePlusBtn = createButton("Store+");
 
-        iplBtn.addActionListener(e -> ipl());
-        stepBtn.addActionListener(e -> step());
-        runBtn.addActionListener(e -> run());
-        haltBtn.addActionListener(e -> halt());
+        iplBtn.addActionListener(_ -> ipl());
+        stepBtn.addActionListener(_ -> step());
+        runBtn.addActionListener(_ -> run());
+        haltBtn.addActionListener(_ -> halt());
+        loadBtn.addActionListener(_ -> load());
+        storeBtn.addActionListener(_ -> store());
+        storePlusBtn.addActionListener(_ -> storePlus());
+        loadPlusBtn.addActionListener(_ -> loadPlus());
 
         panel.add(loadBtn);
         panel.add(runBtn);
@@ -309,8 +315,8 @@ public class ComputerSimulatorGUI extends JFrame {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panel.setOpaque(false);
         panel.add(new JLabel("Program File"));
-        programFileField = new JTextField(40);
-        panel.add(programFileField);
+        assemblyFileField = new JTextField(40);
+        panel.add(assemblyFileField);
         return panel;
     }
 
@@ -330,7 +336,6 @@ public class ComputerSimulatorGUI extends JFrame {
         field.setBackground(Color.WHITE);
         field.setForeground(Color.BLACK);
         field.setText("0");
-        field.setPreferredSize(new Dimension(120, 25));
         return field;
     }
 
@@ -348,75 +353,101 @@ public class ComputerSimulatorGUI extends JFrame {
         return btn;
     }
 
-    private void loadToGPR(int index) {
+    /**
+     * Validate and parse octal input, ensuring it fits in 16 bits
+     * @return the parsed value, or -1 if invalid
+     */
+    private int validateAndParseOctal() {
         try {
             String octal = octalInput.getText().trim();
             int value = Integer.parseInt(octal, 8);
-            computer.getCPU().R[index] = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into R" + index);
+
+            if (value < 0 || value > 0xFFFF) {
+                JOptionPane.showMessageDialog(this,
+                        "Value must be between 0 and 177777 (octal)",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                return -1;
+            }
+
+            return value;
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
+            return -1;
         }
+    }
+
+    private void loadToGPR(int index) {
+        int value = validateAndParseOctal();
+        if (value == -1) return;
+
+        computer.cpu.R[index] = (short) value;
+        updateDisplay();
+        JOptionPane.showMessageDialog(this,
+                "Loaded " + String.format("%06o", value) + " (octal) = " + value + " (decimal) into R" + index);
     }
 
     private void loadToIXR(int index) {
-        try {
-            String octal = octalInput.getText().trim();
-            int value = Integer.parseInt(octal, 8);
-            computer.getCPU().IX[index] = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into X" + index);
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        int value = validateAndParseOctal();
+        if (value == -1) return;
+
+        computer.cpu.IX[index] = (short) value;
+        updateDisplay();
+        JOptionPane.showMessageDialog(this,
+                "Loaded " + String.format("%06o", value) + " (octal) = " + value + " (decimal) into X" + index);
     }
 
     private void loadToPC() {
-        try {
-            String octal = octalInput.getText().trim();
-            int value = Integer.parseInt(octal, 8);
-            computer.getCPU().PC = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into PC");
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        int value = validateAndParseOctal();
+        if (value == -1) return;
+
+        computer.cpu.PC = (short) value;
+        updateDisplay();
+        JOptionPane.showMessageDialog(this,
+                "Loaded " + String.format("%06o", value) + " (octal) = " + value + " (decimal) into PC");
     }
 
     private void loadToMAR() {
-        try {
-            String octal = octalInput.getText().trim();
-            int value = Integer.parseInt(octal, 8);
-            computer.getCPU().MAR = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into MAR");
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        int value = validateAndParseOctal();
+        if (value == -1) return;
+
+        computer.cpu.MAR = (short) value;
+        updateDisplay();
+        JOptionPane.showMessageDialog(this,
+                "Loaded " + String.format("%06o", value) + " (octal) = " + value + " (decimal) into MAR");
     }
 
     private void loadToMBR() {
-        try {
-            String octal = octalInput.getText().trim();
-            int value = Integer.parseInt(octal, 8);
-            computer.getCPU().MBR = (short) value;
-            updateDisplay();
-            JOptionPane.showMessageDialog(this,
-                    "Loaded " + octal + " (octal) = " + value + " (decimal) into MBR");
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid octal number!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        int value = validateAndParseOctal();
+        if (value == -1) return;
+
+        computer.cpu.MBR = (short) value;
+        updateDisplay();
+        JOptionPane.showMessageDialog(this,
+                "Loaded " + String.format("%06o", value) + " (octal) = " + value + " (decimal) into MBR");
+    }
+
+    private void load() {
+        int value = validateAndParseOctal();
+        if (value == -1) return;
+
+        int address = computer.cpu.MAR & 0xFFFF;
+
+        computer.cache.write(address, (short) value);
+        computer.cpu.MBR = (short) value;
+
+        updateDisplay();
+        JOptionPane.showMessageDialog(this,
+                "Loaded " + String.format("%06o", value) + " (octal) into Memory[" + address + "]");
     }
 
     private void ipl() {
-        String programFile = programFileField.getText();
+        String assemFile = assemblyFileField.getText();
+        String loadFile = src.Assembler.assembleFile(
+                assemFile,
+                "data/listing.txt",
+                "data/load.txt");
         computer = new Computer();
-        computer.IPL(programFile, 14);
+        computer.IPL(loadFile, Integer.parseInt(pcField.getText().trim(), 8));
         updateDisplay();
         JOptionPane.showMessageDialog(this, "Program loaded successfully!");
     }
@@ -437,26 +468,49 @@ public class ComputerSimulatorGUI extends JFrame {
         JOptionPane.showMessageDialog(this, "Halted!");
     }
 
+    private void store() {
+        int address = computer.cpu.MAR & 0xFFFF;
+        short value = computer.cache.read(address);
+        computer.cpu.MBR = value;
+
+        updateDisplay();
+        JOptionPane.showMessageDialog(this,
+                "Stored Memory[" + address + "] = " + String.format("%06o", value & 0xFFFF) + " (octal) into MBR");
+    }
+
+    private void loadPlus() {
+        load();
+        computer.cpu.MAR++;
+        updateDisplay();
+    }
+
+    private void storePlus() {
+        store();
+        computer.cpu.MAR++;
+        updateDisplay();
+    }
+
+    /** Refresh all register fields and the IR binary view (octal formatting). */
     private void updateDisplay() {
         for (int i = 0; i < 4; i++) {
-            gprFields[i].setText(String.format("%06o", computer.getCPU().R[i] & 0xFFFF));
+            gprFields[i].setText(String.format("%06o", computer.cpu.R[i] & 0xFFFF));
         }
 
         for (int i = 1; i <= 3; i++) {
-            ixrFields[i].setText(String.format("%06o", computer.getCPU().IX[i] & 0xFFFF));
+            ixrFields[i].setText(String.format("%06o", computer.cpu.IX[i] & 0xFFFF));
         }
 
-        pcField.setText(String.format("%06o", computer.getCPU().PC & 0xFFFF));
-        marField.setText(String.format("%06o", computer.getCPU().MAR & 0xFFFF));
-        mbrField.setText(String.format("%06o", computer.getCPU().MBR & 0xFFFF));
-        irField.setText(String.format("%06o", computer.getCPU().IR & 0xFFFF));
+        pcField.setText(String.format("%06o", computer.cpu.PC & 0xFFFF));
+        marField.setText(String.format("%06o", computer.cpu.MAR & 0xFFFF));
+        mbrField.setText(String.format("%06o", computer.cpu.MBR & 0xFFFF));
+        irField.setText(String.format("%06o", computer.cpu.IR & 0xFFFF));
 
         updateBinaryDisplay();
         updateCacheDisplay();
     }
 
     private void updateBinaryDisplay() {
-        int ir = computer.getCPU().IR & 0xFFFF;
+        int ir = computer.cpu.IR & 0xFFFF;
         String binary = String.format("%16s", Integer.toBinaryString(ir)).replace(' ', '0');
 
         StringBuilder formatted = new StringBuilder();
@@ -474,7 +528,7 @@ public class ComputerSimulatorGUI extends JFrame {
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 int address = row * 8 + col;
-                short value = computer.getMemory().read(address);
+                short value = computer.cache.read(address);
                 cache.append(String.format("%03o %06o ", address, value & 0xFFFF));
             }
             cache.append("\n");
