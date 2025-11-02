@@ -12,7 +12,7 @@ replacement policy: as soon as a cache miss occurs, the least recently used word
    2. The 'data/parse_num_99.txt' parses numbers from 0 to 99 and prints them out on the display.
    3. The 'data/parse_num_999.txt' parses numbers from -999 to 999 and prints them out on the display.
 4. However, we were unable to complete the program 1 in the part 2 documentation. I ran into issues managing the index 
-registers when requiring a larger number of 
+registers when requiring a larger number of variables being stored.
 
 # Quick Start - Part 2
 The "Simulator Quick Start" section below still applies to part 2, except that now the UI displays the cache, an OUT 
