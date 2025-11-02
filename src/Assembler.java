@@ -75,14 +75,14 @@ public class Assembler {
                 continue;
             }
 
-            // Handle labels
+            // Hadd label to the label map
             if (line.contains(":")) {
                 String label = line.substring(0, line.indexOf(":")).trim();
                 labels.put(label, currentLoc);
                 line = line.substring(line.indexOf(":") + 1).trim();
             }
 
-            // Remove comments for processing
+            // strip comments
             if (line.contains(";")) {
                 line = line.substring(0, line.indexOf(";")).trim();
             }
@@ -94,7 +94,6 @@ public class Assembler {
                     currentLoc = Integer.parseInt(parts[1]);
                 }
             } else if (line.startsWith("Data") || (!line.isEmpty() && !line.startsWith("LOC"))) {
-                // Data directive or instruction - increment location
                 currentLoc++;
             }
         }
@@ -146,8 +145,10 @@ public class Assembler {
         // handle instructions and increment location
         if (!instructionPart.isEmpty()) {
             try {
-                String listingLine = Encoder.encodeInstruction(currentLoc, line, false);
-                String loadLine = Encoder.encodeInstruction(currentLoc, line, true);
+                String resolvedInstruction = handleLabels(instructionPart);
+
+                String listingLine = Encoder.encodeInstruction(currentLoc, resolvedInstruction, false);
+                String loadLine = Encoder.encodeInstruction(currentLoc, resolvedInstruction, true);
                 currentLoc++;
                 return new ProcessedLine(listingLine, loadLine);
             } catch (Exception e) {
@@ -157,6 +158,33 @@ public class Assembler {
         }
 
         return new ProcessedLine(null, null);
+    }
+
+    /**
+     * handles label references in an instruction to their numeric addresses.
+     * For example: "JMA 0, 0, LOOP" becomes "JMA 0, 0, 11" if LOOP is at location 11
+     */
+    private static String handleLabels(String instruction) {
+        String[] parts = instruction.split("[,\\s]+");
+        StringBuilder resolved = new StringBuilder();
+
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i].trim();
+
+            String cleaned = part.replaceAll("[,]", "").trim();
+
+            if (labels.containsKey(cleaned)) {
+                resolved.append(labels.get(cleaned));
+            } else {
+                resolved.append(part);
+            }
+
+            if (i < parts.length - 1) {
+                resolved.append(" ");
+            }
+        }
+
+        return resolved.toString();
     }
 
     private static ProcessedLine handleLOC(String cleanLine, String originalLine) {

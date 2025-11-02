@@ -1,0 +1,56 @@
+; Program: Read a multi-digit positive number
+; Type digits, then type '.' (period) to end
+        LOC 10
+
+; Constants
+ZERO:   Data 0
+DIGIT0: Data 48          ; ASCII '0'
+PERIOD: Data 46          ; ASCII '.' - use as terminator
+
+; Variables
+NUMVAL: Data 0
+DIGIT:  Data 0
+TIMES8: Data 0
+TIMES2: Data 0
+RESULT: Data 0
+
+START:  JSR 0, READNUM ;loc 18 - 22 octal
+        STR 0, 0, RESULT
+        HLT
+
+READNUM:
+        LDR 0, 0, ZERO
+        STR 0, 0, NUMVAL
+
+RDCHAR: IN 1, 0
+        OUT 1, 1         ; Echo
+
+        ; Check for period (terminator)
+        LDR 2, 0, PERIOD
+        TRR 1, 2
+        JCC 3, 0, RDDONE
+
+        ; Convert ASCII to digit
+        LDR 2, 0, DIGIT0
+        SMR 1, 0, DIGIT0
+        STR 1, 0, DIGIT
+
+        ; Multiply by 10
+        LDR 0, 0, NUMVAL
+        LDR 2, 0, NUMVAL
+
+        SRC 0, 3, 1, 1   ; times 8
+        STR 0, 0, TIMES8
+
+        SRC 2, 1, 1, 1   ; times 2
+        STR 2, 0, TIMES2
+
+        LDR 0, 0, TIMES8
+        AMR 0, 0, TIMES2
+        AMR 0, 0, DIGIT
+
+        STR 0, 0, NUMVAL
+        JMA 0, RDCHAR
+
+RDDONE: LDR 0, 0, NUMVAL
+        RFS 0

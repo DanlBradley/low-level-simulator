@@ -1,9 +1,14 @@
 package src;
 
+import java.io.IOException;
+
 public class Computer {
     public CPU cpu;
     public Cache cache;
     private boolean halted;
+    private boolean waitingForInput;
+    private int waitingRegister;
+    private ComputerSimulatorGUI gui;
 
     private static final int LDR = 1;
     private static final int STR = 2;
@@ -48,6 +53,12 @@ public class Computer {
         cpu = new CPU();
         cache = new Cache();
         halted = false;
+        waitingForInput = false;
+        waitingRegister = -1;
+    }
+
+    public void setGUI(ComputerSimulatorGUI gui) {
+        this.gui = gui;
     }
 
     public static void main(String[] args) {
@@ -73,15 +84,49 @@ public class Computer {
         System.out.println("PC set to " + cpu.PC);
     }
 
+    public boolean isWaitingForInput() {
+        return waitingForInput;
+    }
+
+    public void continueFromInput() {
+        if (!waitingForInput) return;
+
+        if (gui != null && gui.hasConsoleInput()) {
+            String input = gui.getConsoleInput();
+            char ch = input.charAt(0);
+            cpu.R[waitingRegister] = (short)(ch & 0xFF);
+            gui.clearConsoleInput();
+            System.out.println("IN: Read '" + ch + "' (ASCII " + (int)ch + ") into R" + waitingRegister);
+
+            waitingForInput = false;
+            waitingRegister = -1;
+
+            // Move PC forward since we successfully completed the IN instruction
+            cpu.PC++;
+
+            // Now continue running if we weren't halted
+            if (!halted) {
+                run();
+                if (gui != null) {
+                    gui.updateDisplay();
+                }
+            }
+        }
+    }
+
     /**
      * Runs thru all single steps.
      */
     public void run() {
         System.out.println("\nRunning Program");
-        while(!halted) {
+        while(!halted && !waitingForInput) {
             singleStep();
         }
-        System.out.println("\nProgram execution completed");
+        if (waitingForInput) {
+            System.out.println("\nProgram paused - waiting for console input");
+        } else {
+            System.out.println("\nProgram execution completed");
+        }
     }
 
     /**
@@ -239,6 +284,8 @@ public class Computer {
                 cpu.R[3] = cpu.PC;
                 cpu.PC = (short)effectiveAddress;
                 System.out.println("JSR: jumping to " + effectiveAddress);
+                System.out.println("JSR: R3 = " + cpu.R[3] + " (return address), PC = " + cpu.PC);
+                System.out.println("Absolute address: " + address);
                 break;
             case RFS:
                 cpu.R[0] = (short)address;
@@ -318,9 +365,13 @@ public class Computer {
                 if (cpu.R[reg] == cpu.R[ix]) { // EQ: cpu.cc = 1000 || cpu.CC
                     cpu.CC |= 0b1000;
                     System.out.println("TRR: R" + reg + " == R" + ix + " (EQUAL)");
+                    System.out.println("TRR: R" + reg + " = " + cpu.R[reg] + " (R" + reg + ")");
+                    System.out.println("TRR: R" + ix + " = " + cpu.R[ix] + " (R" + ix + ")");
                 } else {
                     cpu.CC &= ~0b1000; //set 0 for not eq.
                     System.out.println("TRR: R" + reg + " != R" + ix + " (NOT EQUAL)");
+                    System.out.println("TRR: R" + reg + " = " + cpu.R[reg] + " (R" + reg + ")");
+                    System.out.println("TRR: R" + ix + " = " + cpu.R[ix] + " (R" + ix + ")");
                 }
                 break;
             case AND:
@@ -401,20 +452,42 @@ public class Computer {
                 break;
 
             case IN:
-                if (address == 0) {
-                    System.out.print("IN: Enter character for R" + reg + ": ");
-                } else if (address == 2) {
-                    System.out.println("IN: Reading from card reader to R" + reg);
+                if (address == 0) {  //keyboard
+                    if (gui != null) {
+                        // Get input from GUI console
+                        String input = gui.getConsoleInput();
+                        if (input != null && !input.isEmpty()) {
+                            char ch = input.charAt(0);
+                            cpu.R[reg] = (short)(ch & 0xFF);
+                            gui.clearConsoleInput();
+                            System.out.println("IN: Read '" + ch + "' (ASCII " + (int)ch + ") into R" + reg);
+                        } else {
+                            System.out.println("IN: Waiting for console input for R" + reg);
+                            waitingForInput = true;
+                            waitingRegister = reg;
+                            cpu.PC--; //back-up to read again if no input is given
+                            return;
+                        }
+                    }
+                } else if (address == 2) {  //card reader
+                    System.out.println("IN: Card reader not implemented, R" + reg + " = 0");
+                    cpu.R[reg] = 0;
                 } else {
                     System.out.println("IN: Device " + address + " not implemented");
                 }
                 break;
 
             case OUT:
-
-                if (address == 1) {
+                if (address == 1) {  // Console Printer
                     char ch = (char)(cpu.R[reg] & 0xFF);
-                    System.out.println("OUT: R" + reg + " -> Console: '" + ch + "'");
+                    if (gui != null) {
+                        //GUI output
+                        gui.printToOutput(String.valueOf(ch));
+                    }
+                    //debugging
+                    System.out.print(ch);
+                    System.out.flush();
+                    System.out.println("\nOUT: Printed '" + ch + "' (ASCII " + (int)ch + ") from R" + reg);
                 } else {
                     System.out.println("OUT: Device " + address + " not implemented");
                 }

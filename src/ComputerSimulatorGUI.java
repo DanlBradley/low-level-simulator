@@ -10,7 +10,8 @@ public class ComputerSimulatorGUI extends JFrame {
     private final JTextField[] gprFields = new JTextField[4];
     private final JTextField[] ixrFields = new JTextField[4];
     private JTextField pcField, marField, mbrField, irField;
-    private JTextField ccField, mfrField;
+    private String inputBuffer = "";
+    private int inputBufferPosition = 0;
 
     private JTextArea binaryDisplay;
 
@@ -23,8 +24,9 @@ public class ComputerSimulatorGUI extends JFrame {
 
     public ComputerSimulatorGUI() {
         computer = new Computer();
+        computer.setGUI(this);
         setupUI();
-        assemblyFileField.setText("data/load_store_test.txt");
+        assemblyFileField.setText("data/read_three.txt");
         updateDisplay();
     }
 
@@ -46,6 +48,14 @@ public class ComputerSimulatorGUI extends JFrame {
         mainPanel.add(rightPanel, BorderLayout.EAST);
 
         add(mainPanel);
+        consoleInputField.addActionListener(e -> {
+            // When Enter is pressed, if computer is waiting for input, continue
+            System.out.println("Console input: " + consoleInputField.getText());
+            System.out.println("isWaitingForInput: " + computer.isWaitingForInput());
+            if (computer.isWaitingForInput()) {  // You'd need to add this method
+                computer.continueFromInput();
+            }
+        });
     }
 
     private JPanel createCenterPanel() {
@@ -446,6 +456,7 @@ public class ComputerSimulatorGUI extends JFrame {
                 "data/listing.txt",
                 "data/load.txt");
         computer = new Computer();
+        computer.setGUI(this);
         computer.IPL(loadFile, Integer.parseInt(pcField.getText().trim(), 8));
         updateDisplay();
         JOptionPane.showMessageDialog(this, "Program loaded successfully!");
@@ -459,7 +470,10 @@ public class ComputerSimulatorGUI extends JFrame {
     private void run() {
         computer.run();
         updateDisplay();
-        JOptionPane.showMessageDialog(this, "Program execution completed!");
+
+        if (!computer.isWaitingForInput()) {
+            JOptionPane.showMessageDialog(this, "Program execution completed!");
+        }
     }
 
     private void halt() {
@@ -490,7 +504,7 @@ public class ComputerSimulatorGUI extends JFrame {
     }
 
     /** Refresh all register fields and the IR binary view (octal formatting). */
-    private void updateDisplay() {
+    public void updateDisplay() {
         for (int i = 0; i < 4; i++) {
             gprFields[i].setText(String.format("%06o", computer.cpu.R[i] & 0xFFFF));
         }
@@ -537,17 +551,44 @@ public class ComputerSimulatorGUI extends JFrame {
         cacheDisplay.setText(cache.toString());
     }
 
+    public void printChar(char ch) {
+        printerOutput.append(String.valueOf(ch));
+        printerOutput.setCaretPosition(printerOutput.getDocument().getLength());
+    }
+
     public void printToOutput(String text) {
         printerOutput.append(text + "\n");
         printerOutput.setCaretPosition(printerOutput.getDocument().getLength());
     }
 
+    /**
+     * updated to go thru string input buffer
+     * @return
+     */
+    public boolean hasConsoleInput() {
+        String fieldText = consoleInputField.getText();
+        if (!fieldText.isEmpty() && inputBuffer.isEmpty()) {
+            inputBuffer = fieldText;
+            inputBufferPosition = 0;
+        }
+        return inputBufferPosition < inputBuffer.length();
+    }
+
     public String getConsoleInput() {
-        return consoleInputField.getText();
+        if (inputBufferPosition < inputBuffer.length()) {
+            String result = String.valueOf(inputBuffer.charAt(inputBufferPosition));
+            inputBufferPosition++;
+            return result;
+        }
+        return "";
     }
 
     public void clearConsoleInput() {
-        consoleInputField.setText("");
+        if (inputBufferPosition >= inputBuffer.length()) {
+            consoleInputField.setText("");
+            inputBuffer = "";
+            inputBufferPosition = 0;
+        }
     }
 
     public static void main(String[] args) {
