@@ -1,0 +1,30 @@
+; simple test implementation 0-99:
+        LOC 6
+
+ZERO:   Data 0
+TEN:    Data 10
+DIGIT0: Data 48
+DIG0:   Data 0
+DIG1:   Data 0
+TESTNUM: Data 23
+
+; Main
+START:  LDR 0, 0, TESTNUM
+        JSR 0, PRINT
+        HLT
+
+; Print (max 99)
+PRINT:  LDR 2, 0, TEN
+        DVD 0, 2
+        STR 1, 0, DIG0
+        LDR 1, 0, ZERO
+        TRR 0, 1
+        JZ 0, 0, PR1
+        STR 0, 0, DIG1
+        LDR 1, 0, DIG1
+        AMR 1, 0, DIGIT0
+        OUT 1, 1
+PR1:    LDR 1, 0, DIG0
+        AMR 1, 0, DIGIT0
+        OUT 1, 1
+        RFS 0

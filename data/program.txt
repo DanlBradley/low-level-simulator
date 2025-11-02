@@ -1,0 +1,154 @@
+; PROGRAM 1
+; Read in 20 numbers from -32768 to 32767 one at a time
+; Enter any number from -32768 to 32767
+; The program will print the closest number to the entered number
+        LOC 50
+
+;guess nums
+NUM1:   Data 0
+NUM2:   Data 0
+NUM3:   Data 0
+;etc thru NUM20 - there's gotta be a better way to handle arrays. Maybe just like data + offset? idk assembly is hard
+GUESS:  Data 0          ; guess char - this is the one you enter
+DIGIT0: Data 48          ; ASCII '0' - used to parse numbers by subtracting this value
+
+;multiline data
+ZERO:   Data 0
+PERIOD: Data 46          ; ASCII '.' - use as terminator
+NUMVAL: Data 0
+DIGIT:  Data 0
+TIMES8: Data 0
+TIMES2: Data 0
+RESULT: Data 0
+
+;parse num data block
+TEN:    Data 10
+MINUS:  Data 45
+DIG0:   Data 0
+DIG1:   Data 0
+DIG2:   Data 0
+TESTNUM: Data 123
+
+START:  ; Step 1. Read in the 20 numbers
+        ; 1a. Read first number
+        JSR 0, READNUM ;loc 68 decimal - 104 octal - jumps to
+        STR 0, 0, RESULT
+        LDR 0, 0, RESULT
+        JSR 0, PARSE   ;parse the number
+        STR 0, 0, NUM1 ;store it as num1
+
+
+        ; 1b. Read second number
+        ; 3c. Read third number
+        ; etc. for all 20
+        ; read the guessed number
+        JSR 0, READNUM ;ERROR OCCURS HERE - WHY IS IT NOT JUMPING TO THE RIGHT ADDRESS??? It jumps to 10 instead of
+        ; 75 as it should. Is it because the address field can't hold that much? Because address is 5-bit...
+        STR 0, 0, RESULT
+        LDR 0, 0, RESULT
+        JSR 0, PARSE   ;parse the number
+        STR 0, 0, GUESS ;store it as guess
+
+        ; Step 2. Print number closest to guess
+        ; step 2a. compare NUM1 to GUESS by taking the difference
+        ; step 2b. compare NUM2 to GUESS by taking the difference
+        ; step 2c. compare NUM3 to GUESS by taking the difference
+        ; etc. until you've gone through all 20 numbers
+        ; step 3. print the number closest to GUESS - sweep through all differences and keep the smallest.
+
+        ;exit
+        HLT
+
+
+;--------------------------------------------------------------------------------
+        ;multiline read block. Think this one is working fine per multiline.txt
+READNUM:
+        LDR 0, 0, ZERO
+        STR 0, 0, NUMVAL
+
+RDCHAR: IN 1, 0
+        OUT 1, 1         ; Echo
+
+        ; Check for period (terminator)
+        LDR 2, 0, PERIOD
+        TRR 1, 2
+        JCC 3, 0, RDDONE
+
+        ; Convert ASCII to digit
+        LDR 2, 0, DIGIT0
+        SMR 1, 0, DIGIT0
+        STR 1, 0, DIGIT
+
+        ; Multiply by 10
+        LDR 0, 0, NUMVAL
+        LDR 2, 0, NUMVAL
+
+        SRC 0, 3, 1, 1   ; times 8
+        STR 0, 0, TIMES8
+
+        SRC 2, 1, 1, 1   ; times 2
+        STR 2, 0, TIMES2
+
+        LDR 0, 0, TIMES8
+        AMR 0, 0, TIMES2
+        AMR 0, 0, DIGIT
+
+        STR 0, 0, NUMVAL
+        JMA 0, RDCHAR
+
+RDDONE: LDR 0, 0, NUMVAL
+        RFS 0
+
+
+;--------------------------------------------------------------------------------
+        ;parse_num block. This only handles -999 to 999. Needs to be updated to handle full 16-bit range
+        ;of -32768 to 32767. This is based off parse_num_999.txt
+PARSE:  JGE 0, 0, POSIT
+
+        ; Print minus
+        LDR 1, 0, MINUS
+        OUT 1, 1
+
+        ; Negate
+        NOT 0
+        AIR 0, 1
+
+POSIT:  LDR 2, 0, TEN
+
+        ; Extract ones
+        DVD 0, 2
+        STR 1, 0, DIG0
+
+        ; Check if done (1 digit)
+        LDR 1, 0, ZERO
+        TRR 0, 1
+        JZ 0, 0, PR1
+
+        ; Extract tens
+        DVD 0, 2
+        STR 1, 0, DIG1
+
+        ; Check if done (2 digits)
+        LDR 1, 0, ZERO
+        TRR 0, 1
+        JZ 0, 0, PR2
+
+        ; Store hundreds (R0 already has it)
+        STR 0, 0, DIG2
+
+        ; Print hundreds
+        LDR 1, 0, DIG2
+        AMR 1, 0, DIGIT0
+        OUT 1, 1
+
+PR2:    ; Print tens
+        LDR 1, 0, DIG1
+        AMR 1, 0, DIGIT0
+        OUT 1, 1
+
+PR1:    ; Print ones
+        LDR 1, 0, DIG0
+        AMR 1, 0, DIGIT0
+        OUT 1, 1
+
+        RFS 0;return from subroutine @ contents of register 3
