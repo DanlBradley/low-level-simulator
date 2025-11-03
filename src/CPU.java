@@ -64,15 +64,15 @@ public class CPU {
 
     public int getAL(short instruction) {
         int unsigned = instruction & 0xFFFF;
-        return (unsigned >> 8) & 0x01;
+        return (unsigned >> 7) & 0x01;
     }
     public int getLR(short instruction) {
         int unsigned = instruction & 0xFFFF;
-        return (unsigned >> 8) & 0x01;
+        return (unsigned >> 6) & 0x01;
     }
     public int getCount(short instruction) {
         int unsigned = instruction & 0xFFFF;
-        return unsigned & 0x07;
+        return unsigned & 0x0F;
     }
 
     /**

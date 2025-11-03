@@ -101,12 +101,10 @@ public class Computer {
             waitingForInput = false;
             waitingRegister = -1;
 
-            // Move PC forward since we successfully completed the IN instruction
             cpu.PC++;
 
-            // Now continue running if we weren't halted
             if (!halted) {
-                run();
+                singleStep();
                 if (gui != null) {
                     gui.updateDisplay();
                 }
@@ -231,7 +229,8 @@ public class Computer {
 
             case LDX:
                 if(ix >= 1 && ix <= 3) {
-                    cpu.IX[ix] = cache.read(effectiveAddress);
+                    int ldxEA = getEffectiveAddress(address, 0, indirect);
+                    cpu.IX[ix] = cache.read(ldxEA);
                     System.out.println("LDX: X" + ix + " = M[" + effectiveAddress + "] = " + cpu.IX[ix]);
                 } else {
                     System.out.println("ERROR: Invalid index register " + ix + " for LDX");
@@ -239,7 +238,8 @@ public class Computer {
                 break;
             case STX:
                 if(ix >= 1 && ix <= 3) {
-                    cache.write(effectiveAddress, cpu.IX[ix]);
+                    int stxEA = getEffectiveAddress(address, 0, indirect);
+                    cache.write(stxEA, cpu.IX[ix]);
                     System.out.println("STX: M[" + effectiveAddress + "] = X" + ix + " = " + cpu.IX[ix]);
                 } else {
                     System.out.println("ERROR: Invalid index register " + ix + " for STX");

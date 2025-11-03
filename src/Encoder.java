@@ -125,7 +125,7 @@ public class Encoder {
             throw new IllegalArgumentException("src.main.java.Assembler directive passed to encoder: " + line.trim());
         }
 
-        String[] parts = instructionPart.trim().split("[ ,]+");
+        String[] parts = instructionPart.trim().split("[,\\s]+");
         String opcode = parts[0];
 
         Integer opcodeValue = opcodeMap.get(opcode);

@@ -2,153 +2,251 @@
 ; Read in 20 numbers from -32768 to 32767 one at a time
 ; Enter any number from -32768 to 32767
 ; The program will print the closest number to the entered number
+
+; LOW MEMORY (6-31): lookup tables for subroutines etc. and some variables
+        LOC 6
+
+        ; Subroutine addresses
+        READNUMADDR: Data READNUM
+        PARSEADDR:   Data PARSE
+        RDCHARADDR:  Data RDCHAR
+        RDDONEADDR:  Data RDDONE
+        POSITADDR:   Data POSIT
+        PR1ADDR:     Data PR1
+        PR2ADDR:     Data PR2
+
+        ; Constants
+        MAXVAL:      Data 32767
+        DIGIT0:      Data 48
+        PERIOD:      Data 46
+        MINUS:       Data 45
+
+        ; Working variables
+        NUMVAL:      Data 0
+        RESULT:      Data 0
+        MINDIFF:     Data 0
+        CLOSEST:     Data 0
+
+        HIGHMEMADDR: Data HIGHMEM
+        ARRAYADDR:   Data ARRAY
+
+        ;index register temp store - used to maintain index state after subroutine call
+        ;Note: I try to keep a "focus" for each index register. However, in the subroutines,
+        ;this will be mostly ignored since the main code index registers are stored and restored
+        ;in the subroutine.
+        TEMPX1:       Data 0 ;use this mostly for subroutines
+        TEMPX2:       Data 0 ;use this mostly for HIGHMEM
+        TEMPX3:       Data 0 ;use this mostly for ARRAY
+
+; temp values
         LOC 50
+HIGHMEM:
+        GUESS:       Data 0
 
-;guess nums
-NUM1:   Data 0
-NUM2:   Data 0
-NUM3:   Data 0
-;etc thru NUM20 - there's gotta be a better way to handle arrays. Maybe just like data + offset? idk assembly is hard
-GUESS:  Data 0          ; guess char - this is the one you enter
-DIGIT0: Data 48          ; ASCII '0' - used to parse numbers by subtracting this value
+;HIGHMEM LOOKUP TABLE - just using for reference.
+; 0 = GUESS
+; 1 = DIFF
+;READNUM COROUTINE
+; 2 = DIGIT for READNUM coroutine
+; 3 = TIMES8 for READNUM coroutine
+; 4 = TIMES2 for READNUM coroutine
+;PARSE COROUTINE
+; 2 = DIG0 for PARSE coroutine
+; 3 = DIG1 for PARSE coroutine
+; 4 = DIG2 for PARSE coroutine
 
-;multiline data
-ZERO:   Data 0
-PERIOD: Data 46          ; ASCII '.' - use as terminator
-NUMVAL: Data 0
-DIGIT:  Data 0
-TIMES8: Data 0
-TIMES2: Data 0
-RESULT: Data 0
+;array
+        LOC 70
+        ARRAY:    Data 0
 
-;parse num data block
-TEN:    Data 10
-MINUS:  Data 45
-DIG0:   Data 0
-DIG1:   Data 0
-DIG2:   Data 0
-TESTNUM: Data 123
+; CODE SECTION: Main program and subroutines
+        LOC 100
 
-START:  ; Step 1. Read in the 20 numbers
-        ; 1a. Read first number
-        JSR 0, READNUM ;loc 68 decimal - 104 octal - jumps to
-        STR 0, 0, RESULT
+START:
+        ; Load subroutine addresses into index registers
+        LDX 1, READNUMADDR      ;load in the readnum subroutine to get numbers from console
+
+        ; Step 1a. Read first number
+        JSR 1, 0                ;this is jumping to READNUMADDR
         LDR 0, 0, RESULT
-        JSR 0, PARSE   ;parse the number
-        STR 0, 0, NUM1 ;store it as num1
 
+        LDX 1, PARSEADDR        ;load in the parse subroutine to print the number
+        JSR 1, 0                ;this is jumping to PARSEADDR
+        HLT ;DEBUG stop
 
-        ; 1b. Read second number
-        ; 3c. Read third number
-        ; etc. for all 20
-        ; read the guessed number
-        JSR 0, READNUM ;ERROR OCCURS HERE - WHY IS IT NOT JUMPING TO THE RIGHT ADDRESS??? It jumps to 10 instead of
-        ; 75 as it should. Is it because the address field can't hold that much? Because address is 5-bit...
-        STR 0, 0, RESULT
+        LDX 2, ARRAYADDR
+        STR 0, 2, 0             ;num1 address = NUM1ADDR + 0 (to create an array)
+
+        ; Step 1b. Read guess number
+        LDX 1, READNUMADDR
+        JSR 1, 0
         LDR 0, 0, RESULT
-        JSR 0, PARSE   ;parse the number
-        STR 0, 0, GUESS ;store it as guess
 
-        ; Step 2. Print number closest to guess
-        ; step 2a. compare NUM1 to GUESS by taking the difference
-        ; step 2b. compare NUM2 to GUESS by taking the difference
-        ; step 2c. compare NUM3 to GUESS by taking the difference
-        ; etc. until you've gone through all 20 numbers
-        ; step 3. print the number closest to GUESS - sweep through all differences and keep the smallest.
+        LDX 3, HIGHMEMADDR
+        STR 0, 3, 0             ; Store at X3+0 (GUESS)
 
-        ;exit
+; compare first num to guess and print out difference
+
+        LDR 0, 2, 0             ; R0 = ARRAYADDR + 0 = NUM1
+
+        ; Calculate difference: NUM1 - GUESS
+        SMR 0, 3, 0             ; R0 = NUM1 - GUESS (GUESS is at X3+0)
+        STR 0, 3, 1             ; STORE DIFF at X3+1 (HIGHNUMADDR + 1 = DIFF)
+
+
+        ; Get absolute value (if negative, negate)
+        JGE 0, 0, POSITIVE      ; Skip negation if positive
+        NOT 0                   ; Negate
+        AIR 0, 1
+POSITIVE:
+        ;print it out using PARSEADDR
+        LDX 1, PARSEADDR
+        JSR 1, 0
+
         HLT
 
+; -------------------------coroutines------------------------------
+;
 
-;--------------------------------------------------------------------------------
-        ;multiline read block. Think this one is working fine per multiline.txt
+; READNUM: Read multiline number terminated by period
 READNUM:
-        LDR 0, 0, ZERO
-        STR 0, 0, NUMVAL
+        ;index register temp store
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+        STX 3, TEMPX3
 
-RDCHAR: IN 1, 0
-        OUT 1, 1         ; Echo
+        ;start
+        LDR 0, 0, 0             ;R0 = 0
+        STR 0, 0, NUMVAL        ;NUMVAL = 0
 
+        ; Fall through to RDCHAR
+
+RDCHAR:
+        IN 1, 0
         ; Check for period (terminator)
-        LDR 2, 0, PERIOD
-        TRR 1, 2
-        JCC 3, 0, RDDONE
+        LDR 2, 0, PERIOD        ;R2 = PERIOD
+        TRR 1, 2                ;Set cc(4) = 1 if input = '.', otherwise 0
+        LDX 1, RDDONEADDR       ;set X1 = RDDONEADDR
+        JCC 3, 1, 0             ;jump to X1 + 0 (RDDONEADDR) if cc(4) = 1
+
+        ; DEBUG: echo if not terminator
+        ; OUT 1, 1
 
         ; Convert ASCII to digit
         LDR 2, 0, DIGIT0
         SMR 1, 0, DIGIT0
-        STR 1, 0, DIGIT
+        LDX 3, HIGHMEMADDR
+        STR 1, 3, 2             ;store at X3+2 (DIGIT)
 
-        ; Multiply by 10
+        ; Multiply NUMVAL by 10
         LDR 0, 0, NUMVAL
         LDR 2, 0, NUMVAL
 
-        SRC 0, 3, 1, 1   ; times 8
-        STR 0, 0, TIMES8
+        SRC 0, 3, 1, 1           ; times 8 (shift left 3)
+        STR 0, 3, 3              ; store at X3+3 (TIMES8)
 
-        SRC 2, 1, 1, 1   ; times 2
-        STR 2, 0, TIMES2
+        SRC 2, 1, 1, 1           ; times 2 (shift left 1)
+        STR 2, 3, 4              ; store R2 at X3+3 (TIMES2)
 
-        LDR 0, 0, TIMES8
-        AMR 0, 0, TIMES2
-        AMR 0, 0, DIGIT
+        LDR 0, 3, 3              ; load R0 = TIMES8 (X3+3)
+        ; add: R0 + TIMES2 (X3+4) into R0
+        AMR 0, 3, 4
+        ; add: R0 + DIGIT (X0) into R0
+        AMR 0, 3, 2
 
         STR 0, 0, NUMVAL
-        JMA 0, RDCHAR
 
-RDDONE: LDR 0, 0, NUMVAL
+        ; Loop back to RDCHAR
+        LDX 3, RDCHARADDR
+        JMA 3, 0
+
+RDDONE:
+        LDR 0, 0, NUMVAL
+        STR 0, 0, RESULT ;store answer in temp result value
+
+        ;reload index register temp store
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+        LDX 3, TEMPX3
+
+        ;exit
         RFS 0
 
+; PARSE: Parse and print number (-999 to 999)
+; TODO: Extend to handle -32768 to 32767
+PARSE:
+        ;index register temp store
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+        STX 3, TEMPX3
 
-;--------------------------------------------------------------------------------
-        ;parse_num block. This only handles -999 to 999. Needs to be updated to handle full 16-bit range
-        ;of -32768 to 32767. This is based off parse_num_999.txt
-PARSE:  JGE 0, 0, POSIT
+        ; Check if number is 0
+        LDR 1, 0, 0
+        TRR 0, 1
+        LDX 1, PR1ADDR
+        JZ 0, 1, 0          ;jump to PR1ADDR if cc(4) = 1 from line above
 
-        ; Print minus
+        ; Check if number is positive
+        LDR 1, 0, 0
+        LDX 1, POSITADDR
+        JGE 0, 1, 0         ;jump if greater than or equal to 0 to POSITADDR
+
+        ; Print minus sign
         LDR 1, 0, MINUS
         OUT 1, 1
 
-        ; Negate
+        ; Negate the number - NOT and add 1 - two's complement
         NOT 0
         AIR 0, 1
 
-POSIT:  LDR 2, 0, TEN
+POSIT:
+        LDR 2, 0, 10
 
-        ; Extract ones
+        ; Extract ones digit
         DVD 0, 2
-        STR 1, 0, DIG0
+
+        LDX 2, HIGHMEMADDR
+        STR 1, 2, 2          ;store at X2+2 (DIG0)
 
         ; Check if done (1 digit)
-        LDR 1, 0, ZERO
+        LDR 1, 0, 0
         TRR 0, 1
-        JZ 0, 0, PR1
+        LDX 1, PR1ADDR
+        JZ 0, 1, 0
 
-        ; Extract tens
+        ; Extract tens digit
         DVD 0, 2
-        STR 1, 0, DIG1
+        STR 1, 2, 3           ;store at X2+3 (DIG1)
 
         ; Check if done (2 digits)
-        LDR 1, 0, ZERO
+        LDR 1, 0, 0
         TRR 0, 1
-        JZ 0, 0, PR2
+        LDX 3, PR2ADDR
+        JZ 0, 3, 0
 
-        ; Store hundreds (R0 already has it)
-        STR 0, 0, DIG2
+        ; extract hundreds digit
+        STR 0, 2, 4            ;store at X2+4 (DIG2)
 
         ; Print hundreds
-        LDR 1, 0, DIG2
+        LDR 1, 2, 4
         AMR 1, 0, DIGIT0
         OUT 1, 1
 
-PR2:    ; Print tens
-        LDR 1, 0, DIG1
+PR2:
+        ; Print tens
+        LDR 1, 2, 3         ;load dig1
         AMR 1, 0, DIGIT0
         OUT 1, 1
 
-PR1:    ; Print ones
-        LDR 1, 0, DIG0
+PR1:
+        ; Print ones
+        LDR 1, 2, 2         ;load dig0
         AMR 1, 0, DIGIT0
         OUT 1, 1
 
-        RFS 0;return from subroutine @ contents of register 3
+        ;reload index register temp store
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+        LDX 3, TEMPX3
+
+        RFS 0

@@ -26,7 +26,7 @@ public class ComputerSimulatorGUI extends JFrame {
         computer = new Computer();
         computer.setGUI(this);
         setupUI();
-        assemblyFileField.setText("data/read_three.txt");
+        assemblyFileField.setText("data/program.txt");
         updateDisplay();
     }
 
@@ -49,10 +49,9 @@ public class ComputerSimulatorGUI extends JFrame {
 
         add(mainPanel);
         consoleInputField.addActionListener(e -> {
-            // When Enter is pressed, if computer is waiting for input, continue
             System.out.println("Console input: " + consoleInputField.getText());
             System.out.println("isWaitingForInput: " + computer.isWaitingForInput());
-            if (computer.isWaitingForInput()) {  // You'd need to add this method
+            if (computer.isWaitingForInput()) {
                 computer.continueFromInput();
             }
         });
@@ -268,7 +267,7 @@ public class ComputerSimulatorGUI extends JFrame {
         JPanel octalPanel = new JPanel(new FlowLayout());
         octalPanel.setOpaque(false);
         octalPanel.add(new JLabel("OCTAL INPUT"));
-        octalInput = new JTextField("0", 10);
+        octalInput = new JTextField("000144", 10); //start for program.txt
         octalPanel.add(octalInput);
         panel.add(octalPanel);
 
