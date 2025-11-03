@@ -4,29 +4,34 @@
 ; The program will print the closest number to the entered number
 
 ; LOW MEMORY (6-31): lookup tables for subroutines etc. and some variables
+;currently at 26 out of 32 words
         LOC 6
 
-        ; Subroutine addresses
-        READNUMADDR: Data READNUM
-        PARSEADDR:   Data PARSE
-        RDCHARADDR:  Data RDCHAR
-        RDDONEADDR:  Data RDDONE
-        POSITADDR:   Data POSIT
-        PR1ADDR:     Data PR1
-        PR2ADDR:     Data PR2
+        ; Subroutine addresses - currently 9
+        READNUMADDR:            Data READNUM
+        PARSEADDR:              Data PARSE
+        RDCHARADDR:             Data RDCHAR
+        RDDONEADDR:             Data RDDONE
+        POSITADDR:              Data POSIT
+        PR1ADDR:                Data PR1
+        PR2ADDR:                Data PR2
+        POSITIVEADDR:           Data POSITIVE
+        ASCII_TO_DIGIT_ADDR:    Data ASCII_TO_DIGIT
 
-        ; Constants
+        ; Constants - currently 4
         MAXVAL:      Data 32767
         DIGIT0:      Data 48
         PERIOD:      Data 46
         MINUS:       Data 45
 
-        ; Working variables
+        ; Working variables - currently 4
         NUMVAL:      Data 0
         RESULT:      Data 0
         MINDIFF:     Data 0
         CLOSEST:     Data 0
 
+
+        ;memory address locations - currently 2
         HIGHMEMADDR: Data HIGHMEM
         ARRAYADDR:   Data ARRAY
 
@@ -35,8 +40,8 @@
         ;this will be mostly ignored since the main code index registers are stored and restored
         ;in the subroutine.
         TEMPX1:       Data 0 ;use this mostly for subroutines
-        TEMPX2:       Data 0 ;use this mostly for HIGHMEM
-        TEMPX3:       Data 0 ;use this mostly for ARRAY
+        TEMPX2:       Data 0 ;use this mostly for ARRAY
+        TEMPX3:       Data 0 ;use this mostly for HIGHNUM
 
 ; temp values
         LOC 50
@@ -66,16 +71,12 @@ START:
         ; Load subroutine addresses into index registers
         LDX 1, READNUMADDR      ;load in the readnum subroutine to get numbers from console
 
-        ; Step 1a. Read first number
+        ; Step 1a. Read number array
+        ;TODO: add a loop to read in 20 numbers for the array
         JSR 1, 0                ;this is jumping to READNUMADDR
         LDR 0, 0, RESULT
-
-        LDX 1, PARSEADDR        ;load in the parse subroutine to print the number
-        JSR 1, 0                ;this is jumping to PARSEADDR
-        HLT ;DEBUG stop
-
         LDX 2, ARRAYADDR
-        STR 0, 2, 0             ;num1 address = NUM1ADDR + 0 (to create an array)
+        STR 0, 2, 0             ;store address = ARRAYADDR + 0 (to create an array with first value = result of READNUM)
 
         ; Step 1b. Read guess number
         LDX 1, READNUMADDR
@@ -85,8 +86,8 @@ START:
         LDX 3, HIGHMEMADDR
         STR 0, 3, 0             ; Store at X3+0 (GUESS)
 
-; compare first num to guess and print out difference
-
+; compare num array to guess and print out difference
+        ;TODO: loop through array and compare to guess, updating closest number each time
         LDR 0, 2, 0             ; R0 = ARRAYADDR + 0 = NUM1
 
         ; Calculate difference: NUM1 - GUESS
@@ -95,11 +96,12 @@ START:
 
 
         ; Get absolute value (if negative, negate)
-        JGE 0, 0, POSITIVE      ; Skip negation if positive
+        JGE 0, 0, POSITIVEADDR  ; Skip negation if positive
         NOT 0                   ; Negate
         AIR 0, 1
 POSITIVE:
         ;print it out using PARSEADDR
+        ;TODO: print out the number that was the cloest to the guess, not the difference
         LDX 1, PARSEADDR
         JSR 1, 0
 
@@ -109,6 +111,7 @@ POSITIVE:
 ;
 
 ; READNUM: Read multiline number terminated by period
+; TODO: Handle negative numbers
 READNUM:
         ;index register temp store
         STX 1, TEMPX1
@@ -132,9 +135,19 @@ RDCHAR:
         ; DEBUG: echo if not terminator
         ; OUT 1, 1
 
+        ; Check if number is negative
+        LDR 2, 0, PERIOD        ;R2 = PERIOD
+        TRR 1, 2                ;Set cc(4) = 1 if input = '-', otherwise 0
+
+        LDX 1, ASCII_TO_DIGIT_ADDR
+        JCC 3, 1, 0             ;jump to ASCII_TO_DIGIT_ADDR if cc(4) = 1
+        ;TODO: Handle neg. numbers - two's complement?
+        ;1. Keep track of sign - maybe just store here and negate once whole num is solved?
+
+ASCII_TO_DIGIT:
         ; Convert ASCII to digit
         LDR 2, 0, DIGIT0
-        SMR 1, 0, DIGIT0
+        SMR 1, 0, DIGIT0        ;subtract 48 (ASCII '0') from input to get digit
         LDX 3, HIGHMEMADDR
         STR 1, 3, 2             ;store at X3+2 (DIGIT)
 
@@ -151,7 +164,7 @@ RDCHAR:
         LDR 0, 3, 3              ; load R0 = TIMES8 (X3+3)
         ; add: R0 + TIMES2 (X3+4) into R0
         AMR 0, 3, 4
-        ; add: R0 + DIGIT (X0) into R0
+        ; add: R0 + DIGIT (X3 + 2) into R0
         AMR 0, 3, 2
 
         STR 0, 0, NUMVAL
@@ -162,6 +175,8 @@ RDCHAR:
 
 RDDONE:
         LDR 0, 0, NUMVAL
+        ;TODO: Maybe handle negative here? Check some value in the HIGHMEM section if there was a neg. sign.
+        ;If there is, take the parsed number and do whatever we need to do to make it positive.
         STR 0, 0, RESULT ;store answer in temp result value
 
         ;reload index register temp store
