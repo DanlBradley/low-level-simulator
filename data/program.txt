@@ -24,6 +24,7 @@
         RESULT:      Data 0
         MINDIFF:     Data 0
         CLOSEST:     Data 0
+        COUNTER:     Data 0
 
 
         ;memory address locations - currently 2
@@ -74,45 +75,128 @@ JUMPTABLE:
         POSITIVEADDR:        Data POSITIVE          ;7
         ASCII_TO_DIGIT_ADDR: Data ASCII_TO_DIGIT    ;8
         STORENUMBERADDR:     Data STORENUMBER       ;9
+        PR3ADDR:             Data PR3               ;10
+        PR4ADDR:             Data PR4               ;11
+        READLOOPADDR:        Data READLOOP          ;12
+        READGUESSADDR:       Data READGUESS         ;13
+        NOTCLOSERADDR:       Data INCREMENT_GUESS   ;14
+        FINDCLOSESTADDR:     Data FINDCLOSEST       ;15
+        PRINTRESULTADDR:     Data PRINTRESULT       ;16
+        COMPARELOOPADDR:     Data COMPARELOOP       ;17
+        UPDATE_CLOSESTADDR:  Data UPDATE_CLOSEST    ;18
 
 ; CODE SECTION: Main program and subroutines
         LOC 100
 
 START:
+        ; Initialize counter to 20
+        LDR 0, 0, ZERO
+        AIR 0, 3           ; R0 = 20
+        STR 0, 0, COUNTER   ; COUNTER = 20. Alternatively you can modify the counter in the AIR line.
+
         ; Load subroutine addresses into index registers
         LDX 1, JUMPTABLEADDR      ;load in the readnum subroutine to get numbers from console
+        LDX 2, ARRAYADDR          ;load in the array to store numbers in
+        LDX 3, HIGHMEMADDR
 
-        ; Step 1a. Read number array
-        ;TODO: add a loop to read in 20 numbers for the array
-        JSR 1, 0, 1                ;this is jumping to READNUMADDR
+READLOOP:
+        JSR 1, 0, 1         ; Call READNUM
+
         LDR 0, 0, RESULT
-        LDX 2, ARRAYADDR
-        STR 0, 2, 0             ;store address = ARRAYADDR + 0 (to create an array with first value = result of READNUM)
+        STR 0, 2, 0         ; Store at X2+0
+
+        ; Increment X2
+        STX 2, TEMP
+        LDR 0, 0, TEMP
+        AIR 0, 1
+        STR 0, 0, TEMP
+        LDX 2, TEMP
+
+        ; Decrement and check counter
+        LDR 0, 0, COUNTER
+        SIR 0, 1
+        STR 0, 0, COUNTER
+        JZ 0, 1, 13, 1      ; If 0, jump to READGUESS
+
+        JMA 1, 12, 1        ; Jump to READLOOP
+
+READGUESS:
 
         ; Step 1b. Read guess number
         JSR 1, 0, 1                ;this is jumping to READNUMADDR
         LDR 0, 0, RESULT
 
-        LDX 3, HIGHMEMADDR
         STR 0, 3, 0             ; Store at X3+0 (GUESS)
 
 ; compare num array to guess and print out difference
-        ;TODO: loop through array and compare to guess, updating closest number each time
-        LDR 0, 2, 0             ; R0 = ARRAYADDR + 0 = NUM1
+FINDCLOSEST:
+        ; Initialize for search
+        LDR 0, 0, MAXVAL        ; R0 = 32767 (max possible diff)
+        STR 0, 0, MINDIFF       ; MINDIFF = 32767
 
-        ; Calculate difference: NUM1 - GUESS
-        SMR 0, 3, 0             ; R0 = NUM1 - GUESS (GUESS is at X3+0)
-        STR 0, 3, 1             ; STORE DIFF at X3+1 (HIGHNUMADDR + 1 = DIFF)
+        LDR 0, 0, ZERO
+        STR 0, 0, CLOSEST       ; CLOSEST = 0 (will be updated)
+        AIR 0, 20               ; R0 = 20
+        STR 0, 0, COUNTER       ; COUNTER = 20
 
+        LDX 2, ARRAYADDR        ; Reset X2 to start of array
+        LDX 3, HIGHMEMADDR      ; X3 for GUESS/DIFF/temp
 
-        ; Get absolute value (if negative, negate)
-        JGE 0, 1, 7, 1             ; Skip negation if positive (JUMPTABLE + 7 = POSITIVE)
-        NOT 0                   ; Negate
+COMPARELOOP:
+        ; Load current array element
+        LDR 0, 2, 0             ; R0 = current number
+
+        ; Calculate difference: NUM - GUESS
+        SMR 0, 3, 0             ; R0 = NUM - GUESS
+        STR 0, 3, 1             ; Store DIFF at X3+1 (temp)
+
+        ; Get absolute value
+        JGE 0, 1, 7, 1          ; Jump to POSITIVE if >= 0
+        NOT 0
         AIR 0, 1
+
 POSITIVE:
-        ;print it out using PARSEADDR
-        ;TODO: print out the number that was the cloest to the guess, not the difference
-        JSR 1, 1, 1             ;jump to PARSEADDR using indirect
+        STR 0, 0, TEMP          ; Save current diff to TEMP
+
+        ; Compare: is current_diff < MINDIFF?
+        LDR 1, 0, MINDIFF       ; R1 = MINDIFF
+        SMR 1, 0, TEMP          ; R1 = MINDIFF - current_diff
+
+        ; If R1 < 0, then current_diff > MINDIFF (current is WORSE)
+        ; We want to skip update when current is worse
+        ; So: if R1 >= 0, current IS better, so DON'T skip
+
+        ; Use JGE inverted: if NOT >= 0, skip update
+        JGE 1, 1, 18, 1             ; If R1 >= 0, update (current is closer)
+        JMA 1, 14, 1                ; Else skip to INCREMENT_GUESS
+
+UPDATE_CLOSEST:
+        LDR 0, 0, TEMP          ; R0 = current diff
+        STR 0, 0, MINDIFF       ; MINDIFF = current diff
+
+        LDR 0, 2, 0             ; R0 = current array number
+        STR 0, 0, CLOSEST       ; CLOSEST = current number
+        ; Fall through to INCREMENT_GUESS
+
+INCREMENT_GUESS:
+        ; Move to next array element
+        STX 2, TEMP
+        LDR 0, 0, TEMP
+        AIR 0, 1
+        STR 0, 0, TEMP
+        LDX 2, TEMP
+
+        ; Decrement counter and loop
+        LDR 0, 0, COUNTER
+        SIR 0, 1
+        STR 0, 0, COUNTER
+        JZ 0, 1, 16, 1          ; If 0, jump to PRINTRESULT
+        JMA 1, 17, 1            ; Jump back to COMPARELOOP
+
+PRINTRESULT:
+        ; Print the closest number
+        LDR 0, 0, CLOSEST
+        JSR 1, 1, 1             ; Call PARSE
 
         HLT
 
@@ -213,22 +297,21 @@ PARSE:
         STX 2, TEMPX2
         STX 3, TEMPX3
 
-        ;load index registers to be safe
+        ;load index registers
         LDX 1, JUMPTABLEADDR
         LDX 3, HIGHMEMADDR
 
         ; Check if number is 0
-        JZ 0, 1, 5, 1          ;jump to PR1ADDR if R0 = 0
+        JZ 0, 1, 5, 1          ; Jump to PR1 if R0 = 0
 
         ; Check if number is positive
-        LDR 1, 0, ZERO
-        JGE 0, 1, 4, 1         ;jump to POSIT if R0 >= 0
+        JGE 0, 1, 4, 1         ; Jump to POSIT if R0 >= 0
 
         ; Print minus sign
         LDR 1, 0, MINUS
         OUT 1, 1
 
-        ; Negate the number - NOT and add 1 - two's complement
+        ; Negate the number
         NOT 0
         AIR 0, 1
 
@@ -237,35 +320,40 @@ POSIT:
 
         ; Extract ones digit
         DVD 0, 2
-
-        LDX 3, HIGHMEMADDR
-        STR 1, 3, 2          ;store at X3+2 (DIG0)
-        ; TODO: FIX THISSSSSSSSSSSS!!!!!!!!!!!
-        ; Check if done (1 digit)
-        JZ 0, 1, 5, 1          ;jump to PR1ADDR if R0 >= 0
+        STR 1, 3, 2          ; Store DIG0 at X3+2
+        JZ 0, 1, 5, 1        ; If quotient = 0, only 1 digit → PR1
 
         ; Extract tens digit
         DVD 0, 2
-        STR 1, 3, 3           ;store at X3+3 (DIG1)
+        STR 1, 3, 3          ; Store DIG1 at X3+3
+        JZ 0, 1, 6, 1        ; If quotient = 0, only 2 digits → PR2
 
-        ; Check if done (2 digits)
-        JZ 0, 1, 6, 1          ;jump to PR2ADDR if R0 >= 0
-
-        ; extract hundreds digit
+        ; Extract hundreds digit
         DVD 0, 2
-        STR 1, 3, 4            ;store at X2+4 (DIG2)
+        STR 1, 3, 4          ; Store DIG2 at X3+4
+        JZ 0, 1, 10, 1        ; If quotient = 0, only 3 digits → PR3
 
-        ; Check if done (3 digits)
-        JZ 0, 1, 6, 1          ;jump to PR2ADDR if R0 >= 0
-
-        ; extract thousands digit
+        ; Extract thousands digit
         DVD 0, 2
-        STR 1, 3, 5            ;store at X2+5 (DIG3)
+        STR 1, 3, 5          ; Store DIG3 at X3+5
+        JZ 0, 1, 11, 1        ; If quotient = 0, only 4 digits → PR4
 
-        ; Check if done (3 digits)
-        JZ 0, 1, 6, 1          ;jump to PR2ADDR if R0 >= 0
+        ; If we get here, we have 5 digits (ten-thousands)
+        ; R0 has the ten-thousands digit, R1 has thousands remainder
+        STR 0, 3, 6          ; Store DIG4 at X3+6
 
+        ; Print ten-thousands
+        LDR 1, 3, 6
+        AMR 1, 0, DIGIT0
+        OUT 1, 1
 
+PR4:
+        ; Print thousands
+        LDR 1, 3, 5
+        AMR 1, 0, DIGIT0
+        OUT 1, 1
+
+PR3:
         ; Print hundreds
         LDR 1, 3, 4
         AMR 1, 0, DIGIT0
@@ -273,13 +361,13 @@ POSIT:
 
 PR2:
         ; Print tens
-        LDR 1, 3, 3         ;load dig1
+        LDR 1, 3, 3
         AMR 1, 0, DIGIT0
         OUT 1, 1
 
 PR1:
         ; Print ones
-        LDR 1, 3, 2         ;load dig0
+        LDR 1, 3, 2
         AMR 1, 0, DIGIT0
         OUT 1, 1
 
