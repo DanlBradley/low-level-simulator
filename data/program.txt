@@ -141,7 +141,7 @@ START:
 
         ; Initialize counter to 20
         LDR 0, 0, ZERO
-        AIR 0, 3           ; R0 = 20
+        AIR 0, 20           ; R0 = 20
         STR 0, 0, COUNTER   ; COUNTER = 20. Alternatively you can modify the counter in the AIR line.
 
         ; Load subroutine addresses into index registers
