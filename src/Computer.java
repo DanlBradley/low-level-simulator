@@ -104,7 +104,7 @@ public class Computer {
             cpu.PC++;
 
             if (!halted) {
-                singleStep();
+                run();
                 if (gui != null) {
                     gui.updateDisplay();
                 }
@@ -481,8 +481,11 @@ public class Computer {
                 if (address == 1) {  // Console Printer
                     char ch = (char)(cpu.R[reg] & 0xFF);
                     if (gui != null) {
-                        //GUI output
-                        gui.printToOutput(String.valueOf(ch));
+                        if (ch == '\n') {
+                            gui.printToOutput("");
+                        } else {
+                            gui.printChar(ch);
+                        }
                     }
                     //debugging
                     System.out.print(ch);

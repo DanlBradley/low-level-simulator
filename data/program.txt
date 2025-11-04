@@ -4,7 +4,7 @@
 ; The program will print the closest number to the entered number
 
 ; LOW MEMORY (6-31): lookup tables for subroutines etc. and some variables
-;currently at 21 out of 32 words
+;currently at 26 out of 32 words
         LOC 6
         ; subroutine jump table - currently 1
         JUMPTABLEADDR: Data JUMPTABLE
@@ -19,7 +19,7 @@
         TEN:         Data 10
         TEMP:        Data 0
 
-        ; Working variables - currently 4
+        ; Working variables - currently 5
         NUMVAL:      Data 0
         RESULT:      Data 0
         MINDIFF:     Data 0
@@ -27,9 +27,11 @@
         COUNTER:     Data 0
 
 
-        ;memory address locations - currently 2
+        ;memory address locations - currently 4
         HIGHMEMADDR: Data HIGHMEM
         ARRAYADDR:   Data ARRAY
+        MSG1ADDR:    Data MSG1
+        MSG2ADDR:    Data MSG2
 
         ;index register temp store - used to maintain index state after subroutine call
         ;Note: I try to keep a "focus" for each index register. However, in the subroutines,
@@ -63,7 +65,7 @@
         LOC 70
         ARRAY:    Data 0
 ;jump table
-        LOC 500
+        LOC 1000
 JUMPTABLE:
         READNUMADDR:         Data READNUM           ;0
         PARSEADDR:           Data PARSE             ;1
@@ -84,11 +86,59 @@ JUMPTABLE:
         PRINTRESULTADDR:     Data PRINTRESULT       ;16
         COMPARELOOPADDR:     Data COMPARELOOP       ;17
         UPDATE_CLOSESTADDR:  Data UPDATE_CLOSEST    ;18
+        PRINTDONEADDR:       Data PRINTDONE         ;19
+        PRINTLOOPADDR:       Data PRINTLOOP         ;20
+        PRINTSTRADDR:        Data PRINTSTR          ;21
 
-; CODE SECTION: Main program and subroutines
+        ;system display messages
+        LOC 1100
+MSG1:   Data 69         ; 'E'
+        Data 78         ; 'N'
+        Data 84         ; 'T'
+        Data 69         ; 'E'
+        Data 82         ; 'R'
+        Data 32         ; ' '
+        Data 50         ; '2'
+        Data 48         ; '0'
+        Data 32         ; ' '
+        Data 78         ; 'N'
+        Data 85         ; 'U'
+        Data 77         ; 'M'
+        Data 66         ; 'B'
+        Data 69         ; 'E'
+        Data 82         ; 'R'
+        Data 83         ; 'S'
+        Data 58
+        Data 10         ; '\n' (newline)
+        Data 0          ; null terminator
+
+        LOC 1200
+MSG2:   Data 69         ; 'E'
+        Data 78         ; 'N'
+        Data 84         ; 'T'
+        Data 69         ; 'E'
+        Data 82         ; 'R'
+        Data 32         ; ' '
+        Data 65         ; 'A'
+        Data 32         ; ' '
+        Data 71         ; 'G'
+        Data 85         ; 'U'
+        Data 69         ; 'E'
+        Data 83         ; 'S'
+        Data 83         ; 'S'
+        Data 58
+        Data 10         ; '\n'
+        Data 0          ; null terminator
+
+; CODE SECTION: Main program and subroutines: memory range 100-1000
         LOC 100
 
 START:
+        ; Print "ENTER 20 NUMBERS:"
+        LDX 2, MSG1ADDR     ; Load address of MSG1
+        LDX 1, JUMPTABLEADDR
+        JSR 1, 21, 1        ; Call PRINTSTR
+
         ; Initialize counter to 20
         LDR 0, 0, ZERO
         AIR 0, 3           ; R0 = 20
@@ -104,6 +154,9 @@ READLOOP:
 
         LDR 0, 0, RESULT
         STR 0, 2, 0         ; Store at X2+0
+
+        ; Echo the number by parsing and printing it
+        JSR 1, 1, 1
 
         ; Increment X2
         STX 2, TEMP
@@ -121,6 +174,10 @@ READLOOP:
         JMA 1, 12, 1        ; Jump to READLOOP
 
 READGUESS:
+        ; Print "ENTER A GUESS:"
+        LDX 2, MSG2ADDR     ; Load address of MSG2
+        LDX 1, JUMPTABLEADDR
+        JSR 1, 21, 1        ; Call PRINTSTR
 
         ; Step 1b. Read guess number
         JSR 1, 0, 1                ;this is jumping to READNUMADDR
@@ -222,12 +279,20 @@ READNUM:
 RDCHAR:
         IN 1, 0
         ; Check for period (terminator)
-        LDR 2, 0, PERIOD        ;R2 = PERIOD
-        TRR 1, 2                ;Set cc(4) = 1 if input = '.', otherwise 0
-        JCC 3, 1, 3, 1             ;jump to X1 + 3 (RDDONEADDR) if cc(4) = 1
+        ;LDR 2, 0, PERIOD        ;R2 = PERIOD
+        ;TRR 1, 2                ;Set cc(4) = 1 if input = '.', otherwise 0
+        ;JCC 3, 1, 3, 1             ;jump to X1 + 3 (RDDONEADDR) if cc(4) = 1
 
-        ; DEBUG: echo if not terminator
-        ; OUT 1, 1
+        ; Check for newline/enter (ASCII 13 or 10)
+        LDR 2, 0, TEN           ; R2 = 10 (line feed)
+        TRR 1, 2
+        JCC 3, 1, 3, 1          ; Jump to RDDONE if line feed
+
+        ; Also check for carriage return (ASCII 13)
+        LDR 2, 0, ZERO
+        AIR 2, 13               ; R2 = 13 (carriage return)
+        TRR 1, 2
+        JCC 3, 1, 3, 1          ; Jump to RDDONE if carriage return
 
         ; Check if number is negative
         STR 1, 0, TEMP          ; Save input to memory
@@ -371,7 +436,47 @@ PR1:
         AMR 1, 0, DIGIT0
         OUT 1, 1
 
+        ; Print newline
+        LDR 1, 0, ZERO
+        AIR 1, 10             ; ← R1 = 10 (newline char)
+        OUT 1, 1
+
         ;reload index register temp store
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+        LDX 3, TEMPX3
+
+        RFS 0
+
+; PRINTSTR: Print null-terminated string
+; Input: X2 should point to start of string
+PRINTSTR:
+        ; Save registers
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+        STX 3, TEMPX3
+
+        LDX 1, JUMPTABLEADDR
+
+PRINTLOOP:
+        LDR 0, 2, 0         ; Load character
+        JZ 0, 1, 19, 1      ; If 0, done (jump to PRINTDONE)
+
+        ; Print character
+        OUT 0, 1            ; Output to console
+
+        ; Increment string pointer
+        STX 2, TEMP
+        LDR 0, 0, TEMP
+        AIR 0, 1
+        STR 0, 0, TEMP
+        LDX 2, TEMP
+
+        ; Loop
+        JMA 1, 20, 1        ; Jump to PRINTLOOP
+
+PRINTDONE:
+        ; Restore registers
         LDX 1, TEMPX1
         LDX 2, TEMPX2
         LDX 3, TEMPX3

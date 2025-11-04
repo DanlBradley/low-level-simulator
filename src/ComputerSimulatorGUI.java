@@ -567,7 +567,7 @@ public class ComputerSimulatorGUI extends JFrame {
     public boolean hasConsoleInput() {
         String fieldText = consoleInputField.getText();
         if (!fieldText.isEmpty() && inputBuffer.isEmpty()) {
-            inputBuffer = fieldText;
+            inputBuffer = fieldText + "\n";
             inputBufferPosition = 0;
         }
         return inputBufferPosition < inputBuffer.length();
