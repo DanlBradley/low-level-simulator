@@ -1,0 +1,195 @@
+; PROGRAM 1
+; Read in 20 numbers from -32768 to 32767 one at a time
+; Enter any number from -32768 to 32767
+; The program will print the closest number to the entered number
+
+;=============================================================================
+; LOW MEMORY (6-31): Address tables and critical constants
+;=============================================================================
+        LOC 6
+
+; Subroutine addresses
+READNUMADDR: Data READNUM
+PARSEADDR:   Data PARSE
+RDCHARADDR:  Data RDCHAR
+RDDONEADDR:  Data RDDONE
+POSITADDR:   Data POSIT
+PR1ADDR:     Data PR1
+PR2ADDR:     Data PR2
+
+; Critical constants
+ZERO:        Data 0
+ONE:         Data 1
+TEN:         Data 10
+DIGIT0:      Data 48          ; ASCII '0'
+PERIOD:      Data 46          ; ASCII '.'
+MINUS:       Data 45          ; ASCII '-'
+
+; Working variables (keep in low memory for easy access)
+NUMVAL:      Data 0
+DIGIT:       Data 0
+TIMES8:      Data 0
+TIMES2:      Data 0
+RESULT:      Data 0
+DIG0:        Data 0
+DIG1:        Data 0
+DIG2:        Data 0
+
+; Array storage (still in low memory since we have room)
+NUM1:        Data 0
+NUM2:        Data 0
+NUM3:        Data 0
+; TODO: NUM4-NUM20
+GUESS:       Data 0
+
+;=============================================================================
+; CODE SECTION: Main program and subroutines
+;=============================================================================
+        LOC 100
+
+START:
+        ; Load subroutine addresses into index registers
+        LDX 1, READNUMADDR
+        LDX 2, PARSEADDR
+
+        ; Step 1a. Read first number
+        JSR 1, 0
+        STR 0, 0, RESULT
+        LDR 0, 0, RESULT
+        JSR 2, 0
+        STR 0, 0, NUM1
+
+        ; Step 1b. Read guess number
+        JSR 1, 0
+        STR 0, 0, RESULT
+        LDR 0, 0, RESULT
+        JSR 2, 0
+        STR 0, 0, GUESS
+
+        ; Step 2. Print results for testing
+        LDR 1, 0, NUM1
+        OUT 1, 1
+
+        LDR 1, 0, GUESS
+        OUT 1, 1
+
+        HLT
+
+;--------------------------------------------------------------------------------
+; READNUM: Read multiline number terminated by period
+;--------------------------------------------------------------------------------
+READNUM:
+        LDR 0, 0, ZERO
+        STR 0, 0, NUMVAL
+
+        ; Fall through to RDCHAR
+
+RDCHAR:
+        IN 1, 0
+        ; Check for period (terminator)
+        LDR 2, 0, PERIOD
+        TRR 1, 2
+        LDX 3, RDDONEADDR
+        JCC 3, 3, 0
+
+        ; echo if not terminator
+        OUT 1, 1
+
+
+
+        ; Convert ASCII to digit
+        LDR 2, 0, DIGIT0
+        SMR 1, 0, DIGIT0
+        STR 1, 0, DIGIT
+
+        ; Multiply NUMVAL by 10
+        LDR 0, 0, NUMVAL
+        LDR 2, 0, NUMVAL
+
+        SRC 0, 3, 1, 1           ; times 8
+        STR 0, 0, TIMES8
+
+        SRC 2, 1, 1, 1           ; times 2
+        STR 2, 0, TIMES2
+
+        LDR 0, 0, TIMES8
+        AMR 0, 0, TIMES2
+        AMR 0, 0, DIGIT
+
+        STR 0, 0, NUMVAL
+
+        ; Loop back to RDCHAR
+        LDX 3, RDCHARADDR
+        JMA 3, 0
+
+RDDONE:
+        LDR 0, 0, NUMVAL
+        RFS 0
+
+;--------------------------------------------------------------------------------
+; PARSE: Parse and print number (-999 to 999)
+; TODO: Extend to handle -32768 to 32767
+;--------------------------------------------------------------------------------
+PARSE:
+        ; Check if number is 0
+        LDR 1, 0, ZERO
+        TRR 0, 1
+        JZ 0, 3, 0
+
+        ; Check if number is positive
+        LDR 1, 0, ZERO
+        LDX 3, POSITADDR
+        JGE 0, 3, 0
+
+        ; Print minus sign
+        LDR 1, 0, MINUS
+        OUT 1, 1
+
+        ; Negate the number
+        NOT 0
+        AIR 0, 1
+
+POSIT:
+        LDR 2, 0, TEN
+
+        ; Extract ones digit
+        DVD 0, 2
+        STR 1, 0, DIG0
+
+        ; Check if done (1 digit)
+        LDR 1, 0, ZERO
+        TRR 0, 1
+        LDX 3, PR1ADDR
+        JZ 0, 3, 0
+
+        ; Extract tens digit
+        DVD 0, 2
+        STR 1, 0, DIG1
+
+        ; Check if done (2 digits)
+        LDR 1, 0, ZERO
+        TRR 0, 1
+        LDX 3, PR2ADDR
+        JZ 0, 3, 0
+
+        ; Store hundreds digit
+        STR 0, 0, DIG2
+
+        ; Print hundreds
+        LDR 1, 0, DIG2
+        AMR 1, 0, DIGIT0
+        OUT 1, 1
+
+PR2:
+        ; Print tens
+        LDR 1, 0, DIG1
+        AMR 1, 0, DIGIT0
+        OUT 1, 1
+
+PR1:
+        ; Print ones
+        LDR 1, 0, DIG0
+        AMR 1, 0, DIGIT0
+        OUT 1, 1
+
+        RFS 0
