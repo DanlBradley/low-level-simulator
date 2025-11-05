@@ -15,7 +15,7 @@ user to enter a guess number. Finally, the program prints out the closest of the
 The "Simulator Quick Start" section below still applies to part 2, except that now the UI displays the cache, an OUT 
 display field, as well as a console input field to enter data through the IO stream.
 
-To test the functionality, follow the steps below:
+To test the functionality of Program 1, follow the steps below:
 1. First determine which program you want to run. Program 1 is located at `data/program.txt`.
 2. Assemble the program selected using the following line:
 ```
@@ -25,11 +25,18 @@ java -jar build/assembler/*.jar data/program.txt
 ```
 java -jar build/simulator/*.jar
 ```
-2. Select the program you wish to enter. By default the program loaded into the simulator is `data/program.txt`.
-    1. `data/multiline.txt`. Set the PC to octal `000022` and run. It will ask for input. Enter `Hello World!` and 
-press enter. The display should show `Hello World!` one character at a time.
-    2. `data/parse_num_999.txt`. Set the PC to octal `000016` and run. It will print out the number -123 based on the 
-TESTNUM variable. You can enter any numbber from -999 to 999 there.
+4. The GUI should be preloaded with the correct data/load.txt file generated in step 2, and the 
+octal input field should already be filled in with `000144`, which is the correct START location to run the program.
+Select "IPL" to load the program into memory, and select the button under "PC" to set the PC to the correct location.
+Finally, select "Run" to execute the program.
+5. You will be prompted to enter the first 20 numbers into the console input field. You can do so by typing the number,
+from -32768 to 32767, into the console input field, and pressing enter.
+6. You will be prompted to enter a guess number into the console input field. You can do so by typing the number, from 
+-32768 to 32767, into the console input field, and pressing enter.
+7. The closest number will be displayed in the OUT display field.
+8. Optionally, you can modify the line `AIR 0, 20           ; R0 = 20` in the `data/program.txt` file to change the 
+number of numbers to be entered.
+9. Finally, for troubleshooting, please refer to `6461 program one.mov` video for step by step instructions.
 
 ## C6461 Simulator - Part 1
 
