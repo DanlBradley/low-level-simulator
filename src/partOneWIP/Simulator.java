@@ -3,10 +3,6 @@ package src.partOneWIP;// src.partOneWIP.Simulator.java
 // Reads source file, runs assembler (src.partOneWIP.MemoryManager),
 // writes .lst and .load output files.
 
-import src.FileIO;
-
-import java.io.IOException;
-
 public class Simulator {
 //    public static void main(String[] args) throws IOException {
 //        if (args.length != 1) {

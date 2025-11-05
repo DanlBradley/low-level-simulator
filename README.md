@@ -7,29 +7,29 @@ The simulator component has been updated from part 1 to include several new comp
 1. All instructions have been implemented except CHK and part 4 instructions.
 2. A cache of size 16 words has been implemented between the computer and memory. This cache utilizes a simple FIFO 
 replacement policy: as soon as a cache miss occurs, the least recently used word is replaced.
-3. In addition, several programs have been developed in assembly code to test the simulator.
-   1. The 'data/multiline.txt' file allows the user to enter a string of text and have it printed out on the display.
-   2. The 'data/parse_num_99.txt' parses numbers from 0 to 99 and prints them out on the display.
-   3. The 'data/parse_num_999.txt' parses numbers from -999 to 999 and prints them out on the display.
-4. However, we were unable to complete the program 1 in the part 2 documentation. I ran into issues managing the index 
-registers when requiring a larger number of variables being stored.
+3. In addition, we have developed the program located at `data/program.txt` to test the functionality of the 
+simulator. This program first prompts the user to enter 20 numbers. Once they have done that, the program prompts the 
+user to enter a guess number. Finally, the program prints out the closest of the first 20 numbers to the guess number.
 
 # Quick Start - Part 2
 The "Simulator Quick Start" section below still applies to part 2, except that now the UI displays the cache, an OUT 
 display field, as well as a console input field to enter data through the IO stream.
 
-To test the functionality, you can run several programs:
-1. As below, run the simulator with the following line:
+To test the functionality, follow the steps below:
+1. First determine which program you want to run. Program 1 is located at `data/program.txt`.
+2. Assemble the program selected using the following line:
 ```
-java -jar build/simulator/low-level-simulator.jar
+java -jar build/assembler/*.jar data/program.txt
 ```
-2. Select the program you wish to enter. Two programs you can run are as follows:
+3. Run the simulator with the following line:
+```
+java -jar build/simulator/*.jar
+```
+2. Select the program you wish to enter. By default the program loaded into the simulator is `data/program.txt`.
     1. `data/multiline.txt`. Set the PC to octal `000022` and run. It will ask for input. Enter `Hello World!` and 
 press enter. The display should show `Hello World!` one character at a time.
     2. `data/parse_num_999.txt`. Set the PC to octal `000016` and run. It will print out the number -123 based on the 
 TESTNUM variable. You can enter any numbber from -999 to 999 there.
-3. The `data/program.txt` is intended to be the completed program 1 for part 2, however we were unable to get it working.
-There are detailed notes in the `data/program.txt` file that outline how it should work step-by-step.
 
 ## C6461 Simulator - Part 1
 
@@ -106,10 +106,10 @@ java -jar build/encoder-test/*.jar
 In addition, the `data/output_expected.txt` file contains the expected output file from C6461 doc pp. 20.
 
 ## Implementation Notes - Part 0
-For part 0, the main class being run as a jar is src.Assembler. This file reads source files and outputs listing 
-and load files via the src.FileIO class. The Assembler class is essentially a simplified 2-pass assembler, first 
+For part 0, the main class being run as a jar is src.assembler.Assembler. This file reads source files and outputs listing 
+and load files via the src.simulator.FileIO class. The Assembler class is essentially a simplified 2-pass assembler, first 
 collecting labels as a map, then generating listing and load file output thru system directives and instructions. The 
-src.Encoder class is responsible for all instruction encodings, while the src.Assembler class directly handles 
+src.assembler.Encoder class is responsible for all instruction encodings, while the src.assembler.Assembler class directly handles 
 directives.
 
 ## Instruction Set - All Opcodes
