@@ -33,3 +33,6 @@ out/
 # ignore ds store:
 .DS_Store
 */.DS_Store
+
+# Ignore media files:
+*.mov
