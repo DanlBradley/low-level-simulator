@@ -85,16 +85,16 @@ public class Assembler {
                 continue;
             }
 
-            // Hadd label to the label map
+            // strip comments FIRST (before checking for labels)
+            if (line.contains(";")) {
+                line = line.substring(0, line.indexOf(";")).trim();
+            }
+
+            // Add label to the label map
             if (line.contains(":")) {
                 String label = line.substring(0, line.indexOf(":")).trim();
                 labels.put(label, currentLoc);
                 line = line.substring(line.indexOf(":") + 1).trim();
-            }
-
-            // strip comments
-            if (line.contains(";")) {
-                line = line.substring(0, line.indexOf(";")).trim();
             }
 
             // Handle directives that affect location counter
@@ -128,20 +128,20 @@ public class Assembler {
             return new ProcessedLine(null, null);
         }
 
-        // remove label segment
+        // strip out comments FIRST (before checking for labels)
         String workingLine = line;
-        if (line.contains(":")) {
-            workingLine = line.substring(line.indexOf(":") + 1).trim();
-
-            if (workingLine.isEmpty() || workingLine.startsWith(";")) {
-                return new ProcessedLine(null, null);
-            }
+        if (line.contains(";")) {
+            workingLine = line.substring(0, line.indexOf(";")).trim();
         }
 
-        // strip out comments
+        // remove label segment
         String instructionPart = workingLine;
-        if (workingLine.contains(";")) {
-            instructionPart = workingLine.substring(0, workingLine.indexOf(";")).trim();
+        if (workingLine.contains(":")) {
+            instructionPart = workingLine.substring(workingLine.indexOf(":") + 1).trim();
+
+            if (instructionPart.isEmpty()) {
+                return new ProcessedLine(null, null);
+            }
         }
 
         // Handle assembler directives (only increment location with data directives)

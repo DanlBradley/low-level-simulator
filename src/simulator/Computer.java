@@ -2,6 +2,9 @@ package src.simulator;
 
 import src.assembler.Assembler;
 import src.assembler.Encoder;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class Computer {
     public CPU cpu;
@@ -10,6 +13,10 @@ public class Computer {
     private boolean waitingForInput;
     private int waitingRegister;
     private ComputerSimulatorGUI gui;
+
+    // Card reader (device 2) support
+    private BufferedReader cardReader;
+    private String cardReaderFile;
 
     private static final int LDR = 1;
     private static final int STR = 2;
@@ -56,10 +63,30 @@ public class Computer {
         halted = false;
         waitingForInput = false;
         waitingRegister = -1;
+        cardReader = null;
+        cardReaderFile = null;
     }
 
     public void setGUI(ComputerSimulatorGUI gui) {
         this.gui = gui;
+    }
+
+    /**
+     * Set the input file for the card reader (device 2)
+     * @param filename Path to the input file
+     */
+    public void setCardReaderFile(String filename) {
+        this.cardReaderFile = filename;
+        try {
+            if (cardReader != null) {
+                cardReader.close();
+            }
+            cardReader = new BufferedReader(new FileReader(filename));
+            System.out.println("Card reader loaded: " + filename);
+        } catch (IOException e) {
+            System.err.println("Error opening card reader file: " + e.getMessage());
+            cardReader = null;
+        }
     }
 
 //    public static void main(String[] args) {
@@ -471,8 +498,25 @@ public class Computer {
                         }
                     }
                 } else if (address == 2) {  //card reader
-                    System.out.println("IN: Card reader not implemented, R" + reg + " = 0");
-                    cpu.R[reg] = 0;
+                    if (cardReader != null) {
+                        try {
+                            int ch = cardReader.read();
+                            if (ch == -1) {
+                                // End of file - return null character
+                                cpu.R[reg] = 0;
+                                System.out.println("IN: Card reader EOF, R" + reg + " = 0");
+                            } else {
+                                cpu.R[reg] = (short)(ch & 0xFF);
+                                System.out.println("IN: Card reader read '" + (char)ch + "' (ASCII " + ch + ") into R" + reg);
+                            }
+                        } catch (IOException e) {
+                            System.err.println("IN: Card reader error: " + e.getMessage());
+                            cpu.R[reg] = 0;
+                        }
+                    } else {
+                        System.out.println("IN: Card reader not loaded, R" + reg + " = 0");
+                        cpu.R[reg] = 0;
+                    }
                 } else {
                     System.out.println("IN: Device " + address + " not implemented");
                 }

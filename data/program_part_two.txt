@@ -1,0 +1,824 @@
+; ========================================
+; PROGRAM 2: PARAGRAPH WORD SEARCH
+; Reads 6 sentences, prints them, searches for a word
+; ========================================
+
+; ========================================
+; LOW MEMORY: Constants and Variables (6-99)
+; ========================================
+        LOC 6
+
+; Jump table address
+JUMPTABLEADDR:  Data JUMPTABLE
+
+; ASCII Constants
+PERIOD:         Data 46    ; '.'
+SPACE:          Data 32    ; ' '
+NEWLINE:        Data 10    ; '\n'
+COMMA:          Data 44    ; ','
+ZERO:           Data 0
+ONE:            Data 1
+SIX:            Data 6
+DIGIT0:         Data 48    ; '0' for number printing
+
+; Working Variables
+SENTENCECOUNT:  Data 0     ; Current sentence number (1-6)
+CHARCOUNT:      Data 0     ; Characters read so far
+WORDCOUNT:      Data 0     ; Words in current sentence
+MATCHFLAG:      Data 0     ; 1 if word found, 0 otherwise
+FOUNDSENTENCE:  Data 0     ; Sentence number where found
+FOUNDWORD:      Data 0     ; Word position where found
+TEMP:           Data 0
+TEMP2:          Data 0
+TEMP3:          Data 0
+
+; Memory Addresses
+PARAGRAPHADDR:  Data PARAGRAPH
+SEARCHWORDADDR: Data SEARCHWORD
+SENTTABLEADDR:  Data SENTTABLE
+MSG1ADDR:       Data MSG1
+MSG2ADDR:       Data MSG2
+MSG3ADDR:       Data MSG3
+MSG4ADDR:       Data MSG4
+MSG5ADDR:       Data MSG5
+
+; Index Register Storage
+TEMPX1:         Data 0
+TEMPX2:         Data 0
+TEMPX3:         Data 0
+
+; ========================================
+; TEXT STORAGE AREA (100-599)
+; ========================================
+        LOC 100
+PARAGRAPH:      Data 0     ; ~400 words for paragraph storage
+
+        LOC 500
+SEARCHWORD:     Data 0     ; ~50 words for search word
+
+        LOC 550
+SENTTABLE:      Data 0     ; 6 sentence start addresses
+                Data 0
+                Data 0
+                Data 0
+                Data 0
+                Data 0
+
+; ========================================
+; MESSAGES (600-799)
+; ========================================
+        LOC 600
+MSG1:   Data 69    ; 'E'
+        Data 78    ; 'N'
+        Data 84    ; 'T'
+        Data 69    ; 'E'
+        Data 82    ; 'R'
+        Data 32    ; ' '
+        Data 54    ; '6'
+        Data 32    ; ' '
+        Data 83    ; 'S'
+        Data 69    ; 'E'
+        Data 78    ; 'N'
+        Data 84    ; 'T'
+        Data 69    ; 'E'
+        Data 78    ; 'N'
+        Data 67    ; 'C'
+        Data 69    ; 'E'
+        Data 83    ; 'S'
+        Data 58    ; ':'
+        Data 10    ; '\n'
+        Data 0     ; null terminator
+
+        LOC 650
+MSG2:   Data 69    ; 'E'
+        Data 78    ; 'N'
+        Data 84    ; 'T'
+        Data 69    ; 'E'
+        Data 82    ; 'R'
+        Data 32    ; ' '
+        Data 83    ; 'S'
+        Data 69    ; 'E'
+        Data 65    ; 'A'
+        Data 82    ; 'R'
+        Data 67    ; 'C'
+        Data 72    ; 'H'
+        Data 32    ; ' '
+        Data 87    ; 'W'
+        Data 79    ; 'O'
+        Data 82    ; 'R'
+        Data 68    ; 'D'
+        Data 58    ; ':'
+        Data 10    ; '\n'
+        Data 0     ; null terminator
+
+        LOC 700
+MSG3:   Data 70    ; 'F'
+        Data 79    ; 'O'
+        Data 85    ; 'U'
+        Data 78    ; 'N'
+        Data 68    ; 'D'
+        Data 32    ; ' '
+        Data 73    ; 'I'
+        Data 78    ; 'N'
+        Data 32    ; ' '
+        Data 83    ; 'S'
+        Data 69    ; 'E'
+        Data 78    ; 'N'
+        Data 84    ; 'T'
+        Data 69    ; 'E'
+        Data 78    ; 'N'
+        Data 67    ; 'C'
+        Data 69    ; 'E'
+        Data 32    ; ' '
+        Data 0     ; null terminator
+
+        LOC 730
+MSG4:   Data 87    ; 'W'
+        Data 79    ; 'O'
+        Data 82    ; 'R'
+        Data 68    ; 'D'
+        Data 32    ; ' '
+        Data 0     ; null terminator
+
+        LOC 750
+MSG5:   Data 78    ; 'N'
+        Data 79    ; 'O'
+        Data 84    ; 'T'
+        Data 32    ; ' '
+        Data 70    ; 'F'
+        Data 79    ; 'O'
+        Data 85    ; 'U'
+        Data 78    ; 'N'
+        Data 68    ; 'D'
+        Data 10    ; '\n'
+        Data 0     ; null terminator
+
+; ========================================
+; JUMP TABLE (800-899)
+; ========================================
+        LOC 800
+JUMPTABLE:
+        Data READPARAGRAPH      ; 0
+        Data PRINTPARAGRAPH     ; 1
+        Data READWORD           ; 2
+        Data SEARCHWORD_SUB     ; 3
+        Data PRINTRESULT        ; 4
+        Data STRCMP             ; 5
+        Data ISDELIMITER        ; 6
+        Data PRINTSTR           ; 7
+        Data SKIP_DELIM         ; 8
+        Data SKIP_WORD          ; 9
+        Data PRINTNUM           ; 10
+
+; ========================================
+; MAIN PROGRAM (900+)
+; ========================================
+        LOC 900
+
+START:
+        ; Print "ENTER 6 SENTENCES:"
+        LDX 2, MSG1ADDR
+        LDX 1, JUMPTABLEADDR
+        JSR 1, 7, 1             ; Call PRINTSTR
+
+        ; Read paragraph (6 sentences)
+        JSR 1, 0, 1             ; Call READPARAGRAPH
+
+        ; Print paragraph
+        JSR 1, 1, 1             ; Call PRINTPARAGRAPH
+
+        ; Print "ENTER SEARCH WORD:"
+        LDX 2, MSG2ADDR
+        LDX 1, JUMPTABLEADDR
+        JSR 1, 7, 1             ; Call PRINTSTR
+
+        ; Read search word
+        JSR 1, 2, 1             ; Call READWORD
+
+        ; Search for word
+        JSR 1, 3, 1             ; Call SEARCHWORD_SUB
+
+        ; Print result
+        JSR 1, 4, 1             ; Call PRINTRESULT
+
+        HLT
+
+; ========================================
+; SUBROUTINES (1200+)
+; ========================================
+
+; ----------------------------------------
+; READPARAGRAPH
+; Reads 6 sentences from keyboard
+; Each sentence ends with a period
+; ----------------------------------------
+        LOC 1000
+READPARAGRAPH:
+        ; Save registers
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+        STX 3, TEMPX3
+
+        ; Initialize sentence count to 0
+        LDR 0, 0, ZERO
+        STR 0, 0, SENTENCECOUNT
+
+        LDX 1, JUMPTABLEADDR
+        LDX 2, PARAGRAPHADDR     ; X2 = character pointer
+        LDX 3, SENTTABLEADDR     ; X3 = sentence table pointer
+
+SENTENCE_LOOP:
+        ; Store sentence start address in table
+        STX 2, TEMP
+        LDR 0, 0, TEMP
+        STR 0, 3, 0              ; SENTTABLE[X3] = current char address
+
+        ; Increment sentence table pointer
+        STX 3, TEMP
+        LDR 0, 0, TEMP
+        AIR 0, 1
+        STR 0, 0, TEMP
+        LDX 3, TEMP
+
+CHAR_LOOP:
+        ; Read character from card reader (device 2)
+        IN 1, 2
+
+        ; Store character
+        STR 1, 2, 0
+
+        ; Increment character pointer
+        STX 2, TEMP
+        LDR 0, 0, TEMP
+        AIR 0, 1
+        STR 0, 0, TEMP
+        LDX 2, TEMP
+
+        ; Check for period (sentence end)
+        LDR 2, 0, PERIOD
+        TRR 1, 2
+        JNE 1, 1, CHAR_LOOP, 1   ; If not period, continue reading
+
+        ; Found period - sentence complete
+        ; Increment sentence count
+        LDR 0, 0, SENTENCECOUNT
+        AIR 0, 1
+        STR 0, 0, SENTENCECOUNT
+
+        ; Check if we have 6 sentences
+        LDR 2, 0, SIX
+        TRR 0, 2
+        JCC 3, 1, PARA_DONE, 1   ; If equal to 6, done
+
+        ; Continue to next sentence
+        LDX 2, TEMP              ; Restore character pointer
+        JMA 1, SENTENCE_LOOP, 1
+
+PARA_DONE:
+        ; Store null terminator
+        LDR 0, 0, ZERO
+        LDX 2, TEMP
+        STR 0, 2, 0
+
+        ; Restore registers
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+        LDX 3, TEMPX3
+
+        RFS 0
+
+; ----------------------------------------
+; PRINTPARAGRAPH
+; Prints the stored paragraph
+; ----------------------------------------
+        LOC 1200
+PRINTPARAGRAPH:
+        ; Save registers
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+
+        LDX 1, JUMPTABLEADDR
+        LDX 2, PARAGRAPHADDR
+
+PRINT_LOOP:
+        ; Load character
+        LDR 0, 2, 0
+
+        ; Check for null terminator
+        JZ 0, 1, PRINT_DONE, 1
+
+        ; Print character
+        OUT 0, 1
+
+        ; Increment pointer
+        STX 2, TEMP
+        LDR 1, 0, TEMP
+        AIR 1, 1
+        STR 1, 0, TEMP
+        LDX 2, TEMP
+
+        ; Continue loop
+        JMA 1, PRINT_LOOP, 1
+
+PRINT_DONE:
+        ; Print final newline
+        LDR 0, 0, NEWLINE
+        OUT 0, 1
+
+        ; Restore registers
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+
+        RFS 0
+
+; ----------------------------------------
+; READWORD
+; Reads search word from keyboard
+; Terminates on newline
+; ----------------------------------------
+        LOC 1300
+READWORD:
+        ; Save registers
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+
+        LDX 1, JUMPTABLEADDR
+        LDX 2, SEARCHWORDADDR
+
+READWORD_LOOP:
+        ; Read character
+        IN 1, 0
+
+        ; Check for newline (terminator)
+        LDR 2, 0, NEWLINE
+        TRR 1, 2
+        JCC 3, 1, READWORD_DONE, 1
+
+        ; Check for space (also terminator)
+        LDR 2, 0, SPACE
+        TRR 1, 2
+        JCC 3, 1, READWORD_DONE, 1
+
+        ; Store character
+        LDX 2, TEMP
+        STR 1, 2, 0
+
+        ; Increment pointer
+        STX 2, TEMP
+        LDR 0, 0, TEMP
+        AIR 0, 1
+        STR 0, 0, TEMP
+        LDX 2, TEMP
+
+        ; Continue reading
+        JMA 1, READWORD_LOOP, 1
+
+READWORD_DONE:
+        ; Store null terminator
+        LDR 0, 0, ZERO
+        LDX 2, TEMP
+        STR 0, 2, 0
+
+        ; Restore registers
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+
+        RFS 0
+
+; ----------------------------------------
+; ISDELIMITER
+; Checks if character is a delimiter
+; Input: R0 = character
+; Output: R1 = 1 if delimiter, 0 otherwise
+; ----------------------------------------
+        LOC 1400
+ISDELIMITER:
+        ; Check for space
+        LDR 1, 0, SPACE
+        TRR 0, 1
+        JNE 0, 0, CHECK_PERIOD
+
+        ; Is space - return 1
+        LDR 1, 0, ONE
+        RFS 0
+
+CHECK_PERIOD:
+        ; Check for period
+        LDR 1, 0, PERIOD
+        TRR 0, 1
+        JNE 0, 0, CHECK_COMMA
+
+        ; Is period - return 1
+        LDR 1, 0, ONE
+        RFS 0
+
+CHECK_COMMA:
+        ; Check for comma
+        LDR 1, 0, COMMA
+        TRR 0, 1
+        JNE 0, 0, CHECK_NEWLINE
+
+        ; Is comma - return 1
+        LDR 1, 0, ONE
+        RFS 0
+
+CHECK_NEWLINE:
+        ; Check for newline
+        LDR 1, 0, NEWLINE
+        TRR 0, 1
+        JNE 0, 0, NOT_DELIM
+
+        ; Is newline - return 1
+        LDR 1, 0, ONE
+        RFS 0
+
+NOT_DELIM:
+        ; Not a delimiter - return 0
+        LDR 1, 0, ZERO
+        RFS 0
+
+; ----------------------------------------
+; STRCMP
+; Compares two null-terminated strings
+; Input: X1 = string1 address, X2 = string2 address
+; Output: R0 = 1 if match, 0 otherwise
+; ----------------------------------------
+        LOC 1500
+STRCMP:
+        ; Save R3 (used as temp)
+        STR 3, 0, TEMP3
+
+STRCMP_LOOP:
+        ; Load characters from both strings
+        LDR 1, 1, 0              ; R1 = char from string1
+        LDR 2, 2, 0              ; R2 = char from string2
+
+        ; Check if both are null (end of both strings)
+        LDR 3, 0, ZERO
+        TRR 1, 3
+        JNE 1, 0, STRCMP_COMPARE
+
+        ; String1 is null - check if string2 is also null
+        TRR 2, 3
+        JNE 2, 0, STRCMP_NOMATCH
+
+        ; Both null - strings match
+        JMA 0, STRCMP_MATCH
+
+STRCMP_COMPARE:
+        ; Compare characters
+        TRR 1, 2
+        JNE 1, 0, STRCMP_NOMATCH
+
+        ; Characters match - advance both pointers
+        STX 1, TEMP
+        LDR 0, 0, TEMP
+        AIR 0, 1
+        STR 0, 0, TEMP
+        LDX 1, TEMP
+
+        STX 2, TEMP
+        LDR 0, 0, TEMP
+        AIR 0, 1
+        STR 0, 0, TEMP
+        LDX 2, TEMP
+
+        ; Continue comparison
+        JMA 0, STRCMP_LOOP
+
+STRCMP_MATCH:
+        ; Strings match - return 1
+        LDR 0, 0, ONE
+        LDR 3, 0, TEMP3
+        RFS 0
+
+STRCMP_NOMATCH:
+        ; Strings don't match - return 0
+        LDR 0, 0, ZERO
+        LDR 3, 0, TEMP3
+        RFS 0
+
+; ----------------------------------------
+; SKIP_DELIM
+; Skip over delimiters at current position
+; Input: X2 = character pointer
+; Output: X2 = advanced to first non-delimiter
+; ----------------------------------------
+        LOC 1600
+SKIP_DELIM:
+        ; Save registers
+        STX 1, TEMPX1
+
+        LDX 1, JUMPTABLEADDR
+
+SKIP_DELIM_LOOP:
+        ; Load current character
+        LDR 0, 2, 0
+
+        ; Check if null terminator
+        JZ 0, 1, SKIP_DELIM_DONE, 1
+
+        ; Check if delimiter
+        JSR 1, 6, 1              ; Call ISDELIMITER
+
+        ; If not delimiter (R1 = 0), done
+        JZ 1, 1, SKIP_DELIM_DONE, 1
+
+        ; Is delimiter - advance pointer
+        STX 2, TEMP
+        LDR 0, 0, TEMP
+        AIR 0, 1
+        STR 0, 0, TEMP
+        LDX 2, TEMP
+
+        ; Continue skipping
+        JMA 1, SKIP_DELIM_LOOP, 1
+
+SKIP_DELIM_DONE:
+        ; Restore registers
+        LDX 1, TEMPX1
+
+        RFS 0
+
+; ----------------------------------------
+; SKIP_WORD
+; Skip over non-delimiters (word characters)
+; Input: X2 = character pointer
+; Output: X2 = advanced to next delimiter
+; ----------------------------------------
+        LOC 1700
+SKIP_WORD:
+        ; Save registers
+        STX 1, TEMPX1
+
+        LDX 1, JUMPTABLEADDR
+
+SKIP_WORD_LOOP:
+        ; Load current character
+        LDR 0, 2, 0
+
+        ; Check if null terminator
+        JZ 0, 1, SKIP_WORD_DONE, 1
+
+        ; Check if delimiter
+        JSR 1, 6, 1              ; Call ISDELIMITER
+
+        ; If delimiter (R1 = 1), done
+        LDR 2, 0, ONE
+        TRR 1, 2
+        JCC 3, 1, SKIP_WORD_DONE, 1
+
+        ; Not delimiter - advance pointer
+        STX 2, TEMP
+        LDR 0, 0, TEMP
+        AIR 0, 1
+        STR 0, 0, TEMP
+        LDX 2, TEMP
+
+        ; Continue skipping
+        JMA 1, SKIP_WORD_LOOP, 1
+
+SKIP_WORD_DONE:
+        ; Restore registers
+        LDX 1, TEMPX1
+
+        RFS 0
+
+; ----------------------------------------
+; SEARCHWORD_SUB
+; Searches for word in paragraph
+; Outputs: MATCHFLAG, FOUNDSENTENCE, FOUNDWORD
+; ----------------------------------------
+        LOC 1800
+SEARCHWORD_SUB:
+        ; Save registers
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+        STX 3, TEMPX3
+
+        ; Initialize match flag to 0
+        LDR 0, 0, ZERO
+        STR 0, 0, MATCHFLAG
+
+        ; Initialize sentence counter to 1
+        LDR 0, 0, ONE
+        STR 0, 0, SENTENCECOUNT
+
+        LDX 1, JUMPTABLEADDR
+        LDX 3, SENTTABLEADDR
+
+SENT_SEARCH_LOOP:
+        ; Get sentence start address
+        LDR 0, 3, 0
+        STR 0, 0, TEMP2          ; Save sentence start
+
+        ; Load sentence pointer into X2
+        LDX 2, TEMP2
+
+        ; Initialize word count to 1
+        LDR 0, 0, ONE
+        STR 0, 0, WORDCOUNT
+
+        ; Skip initial delimiters
+        JSR 1, 8, 1              ; Call SKIP_DELIM
+
+WORD_SEARCH_LOOP:
+        ; Check if at end of sentence (null or period)
+        LDR 0, 2, 0
+
+        ; Check for null
+        JZ 0, 1, NEXT_SENTENCE, 1
+
+        ; Check for period
+        LDR 1, 0, PERIOD
+        TRR 0, 1
+        JCC 3, 1, NEXT_SENTENCE, 1
+
+        ; Save current word position
+        STX 2, TEMP2
+
+        ; Set up for string comparison
+        ; X2 already points to current word
+        LDX 1, SEARCHWORDADDR    ; X1 = search word
+
+        ; Compare strings
+        STX 1, TEMPX1            ; Save X1 temporarily
+        LDX 1, JUMPTABLEADDR
+        JSR 1, 5, 1              ; Call STRCMP
+        LDX 1, TEMPX1            ; Restore X1
+
+        ; Check if match (R0 = 1)
+        LDR 1, 0, ONE
+        TRR 0, 1
+        JCC 3, 0, WORD_FOUND
+
+        ; No match - restore X2 and skip to next word
+        LDX 2, TEMP2
+        LDX 1, JUMPTABLEADDR
+        JSR 1, 9, 1              ; Call SKIP_WORD
+
+        ; Skip delimiters to next word
+        JSR 1, 8, 1              ; Call SKIP_DELIM
+
+        ; Increment word count
+        LDR 0, 0, WORDCOUNT
+        AIR 0, 1
+        STR 0, 0, WORDCOUNT
+
+        ; Continue word search
+        JMA 1, WORD_SEARCH_LOOP, 1
+
+WORD_FOUND:
+        ; Set match flag
+        LDR 0, 0, ONE
+        STR 0, 0, MATCHFLAG
+
+        ; Store sentence number
+        LDR 0, 0, SENTENCECOUNT
+        STR 0, 0, FOUNDSENTENCE
+
+        ; Store word position
+        LDR 0, 0, WORDCOUNT
+        STR 0, 0, FOUNDWORD
+
+        ; Restore and return
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+        LDX 3, TEMPX3
+        RFS 0
+
+NEXT_SENTENCE:
+        ; Increment sentence count
+        LDR 0, 0, SENTENCECOUNT
+        AIR 0, 1
+        STR 0, 0, SENTENCECOUNT
+
+        ; Check if done (> 6)
+        LDR 1, 0, SIX
+        SMR 0, 0, ONE            ; R0 = count - 1
+        ; If R0 > 6, we've checked all sentences
+        JGE 0, 1, SEARCH_DONE, 1
+
+        ; Increment sentence table pointer
+        STX 3, TEMP
+        LDR 0, 0, TEMP
+        AIR 0, 1
+        STR 0, 0, TEMP
+        LDX 3, TEMP
+
+        ; Continue sentence search
+        LDX 1, JUMPTABLEADDR
+        JMA 1, SENT_SEARCH_LOOP, 1
+
+SEARCH_DONE:
+        ; Not found - MATCHFLAG already 0
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+        LDX 3, TEMPX3
+        RFS 0
+
+; ----------------------------------------
+; PRINTRESULT
+; Prints search result
+; ----------------------------------------
+        LOC 1950
+PRINTRESULT:
+        ; Save registers
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+
+        LDX 1, JUMPTABLEADDR
+
+        ; Check match flag
+        LDR 0, 0, MATCHFLAG
+        JNE 0, 1, PRINT_FOUND, 1
+
+        ; Not found - print "NOT FOUND"
+        LDX 2, MSG5ADDR
+        JSR 1, 7, 1              ; Call PRINTSTR
+        JMA 1, PRINTRES_DONE, 1
+
+PRINT_FOUND:
+        ; Print "FOUND IN SENTENCE "
+        LDX 2, MSG3ADDR
+        JSR 1, 7, 1              ; Call PRINTSTR
+
+        ; Print sentence number
+        LDR 0, 0, FOUNDSENTENCE
+        JSR 1, 10, 1             ; Call PRINTNUM
+
+        ; Print space
+        LDR 0, 0, SPACE
+        OUT 0, 1
+
+        ; Print "WORD "
+        LDX 2, MSG4ADDR
+        JSR 1, 7, 1              ; Call PRINTSTR
+
+        ; Print word number
+        LDR 0, 0, FOUNDWORD
+        JSR 1, 10, 1             ; Call PRINTNUM
+
+        ; Print newline
+        LDR 0, 0, NEWLINE
+        OUT 0, 1
+
+PRINTRES_DONE:
+        ; Restore registers
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+
+        RFS 0
+
+; ----------------------------------------
+; PRINTSTR
+; Prints null-terminated string
+; Input: X2 = string address
+; (Ported from Program 1)
+; ----------------------------------------
+        LOC 2000
+PRINTSTR:
+        ; Save registers
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+
+        LDX 1, JUMPTABLEADDR
+
+PRINTSTR_LOOP:
+        ; Load character
+        LDR 0, 2, 0
+
+        ; Check for null terminator
+        JZ 0, 0, PRINTSTR_DONE
+
+        ; Print character
+        OUT 0, 1
+
+        ; Increment pointer
+        STX 2, TEMP
+        LDR 1, 0, TEMP
+        AIR 1, 1
+        STR 1, 0, TEMP
+        LDX 2, TEMP
+
+        ; Continue
+        JMA 1, PRINTSTR_LOOP, 1
+
+PRINTSTR_DONE:
+        ; Restore registers
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+
+        RFS 0
+
+; ----------------------------------------
+; PRINTNUM
+; Prints a single digit number (0-9)
+; Input: R0 = number
+; ----------------------------------------
+        LOC 2040
+PRINTNUM:
+        ; Convert to ASCII and print
+        AMR 0, 0, DIGIT0
+        OUT 0, 1
+        RFS 0

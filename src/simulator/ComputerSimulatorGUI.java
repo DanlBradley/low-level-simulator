@@ -21,12 +21,14 @@ public class ComputerSimulatorGUI extends JFrame {
     private JTextArea printerOutput;
     private JTextField consoleInputField;
     private JTextField loadFileField;
+    private JTextField cardReaderFileField;
 
     public ComputerSimulatorGUI() {
         computer = new Computer();
         computer.setGUI(this);
         setupUI();
         loadFileField.setText("data/load.txt");
+        cardReaderFileField.setText("data/input.txt");
         updateDisplay();
     }
 
@@ -267,7 +269,7 @@ public class ComputerSimulatorGUI extends JFrame {
         JPanel octalPanel = new JPanel(new FlowLayout());
         octalPanel.setOpaque(false);
         octalPanel.add(new JLabel("OCTAL INPUT"));
-        octalInput = new JTextField("000144", 10); //start for program.txt
+        octalInput = new JTextField("000144", 10); //start for program_part_one.txt
         octalPanel.add(octalInput);
         panel.add(octalPanel);
 
@@ -322,9 +324,17 @@ public class ComputerSimulatorGUI extends JFrame {
     private JPanel createProgramPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panel.setOpaque(false);
+
         panel.add(new JLabel("Program File"));
-        loadFileField = new JTextField(40);
+        loadFileField = new JTextField(25);
         panel.add(loadFileField);
+
+        panel.add(Box.createHorizontalStrut(10));
+
+        panel.add(new JLabel("Card Reader File"));
+        cardReaderFileField = new JTextField(25);
+        panel.add(cardReaderFileField);
+
         return panel;
     }
 
@@ -450,8 +460,16 @@ public class ComputerSimulatorGUI extends JFrame {
 
     private void ipl() {
         String loadFile = loadFileField.getText();
+        String cardReaderFile = cardReaderFileField.getText();
+
         computer = new Computer();
         computer.setGUI(this);
+
+        // Set card reader file if specified
+        if (cardReaderFile != null && !cardReaderFile.trim().isEmpty()) {
+            computer.setCardReaderFile(cardReaderFile.trim());
+        }
+
         computer.IPL(loadFile, Integer.parseInt(pcField.getText().trim(), 8));
         updateDisplay();
         JOptionPane.showMessageDialog(this, "Program loaded successfully!");
