@@ -21,12 +21,14 @@ public class ComputerSimulatorGUI extends JFrame {
     private JTextArea printerOutput;
     private JTextField consoleInputField;
     private JTextField loadFileField;
+    private JTextField cardReaderFileField;
 
     public ComputerSimulatorGUI() {
         computer = new Computer();
         computer.setGUI(this);
         setupUI();
         loadFileField.setText("data/load.txt");
+        cardReaderFileField.setText("data/input.txt");
         updateDisplay();
     }
 
@@ -325,6 +327,11 @@ public class ComputerSimulatorGUI extends JFrame {
         panel.add(new JLabel("Program File"));
         loadFileField = new JTextField(40);
         panel.add(loadFileField);
+
+        panel.add(Box.createHorizontalStrut(10));
+        panel.add(new JLabel("Card Reader File"));
+        cardReaderFileField = new JTextField(25);
+        panel.add(cardReaderFileField);
         return panel;
     }
 
@@ -450,8 +457,12 @@ public class ComputerSimulatorGUI extends JFrame {
 
     private void ipl() {
         String loadFile = loadFileField.getText();
+        String cardReaderFile = cardReaderFileField.getText();
         computer = new Computer();
         computer.setGUI(this);
+        if (cardReaderFile != null && !cardReaderFile.trim().isEmpty()) {
+            computer.setCardReaderFile(cardReaderFile.trim());
+        }
         computer.IPL(loadFile, Integer.parseInt(pcField.getText().trim(), 8));
         updateDisplay();
         JOptionPane.showMessageDialog(this, "Program loaded successfully!");
