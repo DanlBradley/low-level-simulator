@@ -1,0 +1,45 @@
+; PROGRAM 2
+; A program that reads a set of a paragraph of 6 sentences from a file into
+; memory. It prints the sentences on the console printer. It then asks the user for a word. It
+; searches the paragraph to see if it contains the word. If so, it prints out the word, the
+; sentence number, and the word number in the sentence.
+
+; Step by step how program 2 is working:
+; 1. Read 6 sentences from a file into memory using the IN instruction and DEVID = 2 (card reader) and CHK.
+;       This will be done in the READ_STRING_FROM_DEVICE subroutine.
+; 2. Print this message to the console using the PRINT_STRING subroutine.
+; 3. Prompt the user for a word using the PRINT_STRING subroutine and a pre-made message.
+; 4. Record the word entered using the READ_STRING subroutine.
+; 5. Search the paragraph for the word entered. This will be done in the FIND_WORD subroutine.
+;       Save the sentence number and word number in the sentence where the word is found.
+; 6. Finally, print out the word, sentence number, and word number in the sentence if the word is found.
+;       This can either be done in a subroutine or in the main program.
+
+; A quick not about memory layout. I will try to reserve 0-1023 for data, constants, and variables.
+; Program START begins at 1024 (octal 2000).
+; Subroutines will be above all code in the START program.
+
+; LOW MEMORY (6-31): lookup tables for subroutines etc. and some variables
+;currently at 0 out of 32 words
+        LOC 6
+        ; soubroutine jump tables
+        J_TABLE_1_ADDR: Data JUMP_TABLE_ONE
+
+        ; Constants
+        ; Variables
+        ; Memory address locations (for different variables)
+
+        ;index register temp store - used to maintain index state after subroutine call
+        ;Note: I try to keep a "focus" for each index register. However, in the subroutines,
+        ;this will be mostly ignored since the main code index registers are stored and restored
+        ;in the subroutine.
+        TEMPX1:       Data 0 ;use this mostly for subroutines
+        TEMPX2:       Data 0 ;use this mostly for ARRAY
+        TEMPX3:       Data 0 ;use this mostly for HIGHNUM
+
+
+
+; -------------------------coroutines------------------------------
+
+; READ_STRING_FROM_DEVICE subroutine
+READ_STRING_FROM_DEVICE

@@ -3,143 +3,374 @@
 ; Enter any number from -32768 to 32767
 ; The program will print the closest number to the entered number
 
-;=============================================================================
-; LOW MEMORY (6-31): Address tables and critical constants
-;=============================================================================
+; LOW MEMORY (6-31): lookup tables for subroutines etc. and some variables
+;currently at 26 out of 32 words
         LOC 6
+        ; subroutine jump table - currently 1
+        JUMPTABLEADDR: Data JUMPTABLE
 
-; Subroutine addresses
-READNUMADDR: Data READNUM
-PARSEADDR:   Data PARSE
-RDCHARADDR:  Data RDCHAR
-RDDONEADDR:  Data RDDONE
-POSITADDR:   Data POSIT
-PR1ADDR:     Data PR1
-PR2ADDR:     Data PR2
+        ; Constants - currently 8
+        MAXVAL:      Data 32767
+        DIGIT0:      Data 48
+        PERIOD:      Data 46
+        MINUS:       Data 45
+        ZERO:        Data 0
+        ONE:         Data 1
+        TEN:         Data 10
+        TEMP:        Data 0
 
-; Critical constants
-ZERO:        Data 0
-ONE:         Data 1
-TEN:         Data 10
-DIGIT0:      Data 48          ; ASCII '0'
-PERIOD:      Data 46          ; ASCII '.'
-MINUS:       Data 45          ; ASCII '-'
+        ; Working variables - currently 5
+        NUMVAL:      Data 0
+        RESULT:      Data 0
+        MINDIFF:     Data 0
+        CLOSEST:     Data 0
+        COUNTER:     Data 0
 
-; Working variables (keep in low memory for easy access)
-NUMVAL:      Data 0
-DIGIT:       Data 0
-TIMES8:      Data 0
-TIMES2:      Data 0
-RESULT:      Data 0
-DIG0:        Data 0
-DIG1:        Data 0
-DIG2:        Data 0
 
-; Array storage (still in low memory since we have room)
-NUM1:        Data 0
-NUM2:        Data 0
-NUM3:        Data 0
-; TODO: NUM4-NUM20
-GUESS:       Data 0
+        ;memory address locations - currently 4
+        HIGHMEMADDR: Data HIGHMEM
+        ARRAYADDR:   Data ARRAY
+        MSG1ADDR:    Data MSG1
+        MSG2ADDR:    Data MSG2
 
-;=============================================================================
-; CODE SECTION: Main program and subroutines
-;=============================================================================
+        ;index register temp store - used to maintain index state after subroutine call
+        ;Note: I try to keep a "focus" for each index register. However, in the subroutines,
+        ;this will be mostly ignored since the main code index registers are stored and restored
+        ;in the subroutine.
+        TEMPX1:       Data 0 ;use this mostly for subroutines
+        TEMPX2:       Data 0 ;use this mostly for ARRAY
+        TEMPX3:       Data 0 ;use this mostly for HIGHNUM
+
+; temp values
+        LOC 50
+        HIGHMEM:    Data 0
+
+;HIGHMEM LOOKUP TABLE - just using for reference.
+; 0 = GUESS
+; 1 = DIFF
+;READNUM COROUTINE
+; 2 = DIGIT for READNUM coroutine
+; 3 = TIMES8 for READNUM coroutine
+; 4 = TIMES2 for READNUM coroutine
+; 5 = ISNEG for READNUM coroutine
+; 6 = TEMP for READNUM coroutine
+;PARSE COROUTINE - ok to overwrite because they're temp
+; 2 = DIG0 for PARSE coroutine
+; 3 = DIG1 for PARSE coroutine
+; 4 = DIG2 for PARSE coroutine
+; 5 = DIG3 for PARSE coroutine
+; 6 = DIG4 for PARSE coroutine
+
+;array
+        LOC 70
+        ARRAY:    Data 0
+;jump table
+        LOC 1000
+JUMPTABLE:
+        READNUMADDR:         Data READNUM           ;0
+        PARSEADDR:           Data PARSE             ;1
+        RDCHARADDR:          Data RDCHAR            ;2
+        RDDONEADDR:          Data RDDONE            ;3
+        POSITADDR:           Data POSIT             ;4
+        PR1ADDR:             Data PR1               ;5
+        PR2ADDR:             Data PR2               ;6
+        POSITIVEADDR:        Data POSITIVE          ;7
+        ASCII_TO_DIGIT_ADDR: Data ASCII_TO_DIGIT    ;8
+        STORENUMBERADDR:     Data STORENUMBER       ;9
+        PR3ADDR:             Data PR3               ;10
+        PR4ADDR:             Data PR4               ;11
+        READLOOPADDR:        Data READLOOP          ;12
+        READGUESSADDR:       Data READGUESS         ;13
+        NOTCLOSERADDR:       Data INCREMENT_GUESS   ;14
+        FINDCLOSESTADDR:     Data FINDCLOSEST       ;15
+        PRINTRESULTADDR:     Data PRINTRESULT       ;16
+        COMPARELOOPADDR:     Data COMPARELOOP       ;17
+        UPDATE_CLOSESTADDR:  Data UPDATE_CLOSEST    ;18
+        PRINTDONEADDR:       Data PRINTDONE         ;19
+        PRINTLOOPADDR:       Data PRINTLOOP         ;20
+        PRINTSTRADDR:        Data PRINTSTR          ;21
+
+        ;system display messages
+        LOC 1100
+MSG1:   Data 69         ; 'E'
+        Data 78         ; 'N'
+        Data 84         ; 'T'
+        Data 69         ; 'E'
+        Data 82         ; 'R'
+        Data 32         ; ' '
+        Data 50         ; '2'
+        Data 48         ; '0'
+        Data 32         ; ' '
+        Data 78         ; 'N'
+        Data 85         ; 'U'
+        Data 77         ; 'M'
+        Data 66         ; 'B'
+        Data 69         ; 'E'
+        Data 82         ; 'R'
+        Data 83         ; 'S'
+        Data 58
+        Data 10         ; '\n' (newline)
+        Data 0          ; null terminator
+
+        LOC 1200
+MSG2:   Data 69         ; 'E'
+        Data 78         ; 'N'
+        Data 84         ; 'T'
+        Data 69         ; 'E'
+        Data 82         ; 'R'
+        Data 32         ; ' '
+        Data 65         ; 'A'
+        Data 32         ; ' '
+        Data 71         ; 'G'
+        Data 85         ; 'U'
+        Data 69         ; 'E'
+        Data 83         ; 'S'
+        Data 83         ; 'S'
+        Data 58
+        Data 10         ; '\n'
+        Data 0          ; null terminator
+
+; CODE SECTION: Main program and subroutines: memory range 100-1000
         LOC 100
 
 START:
-        ; Load subroutine addresses into index registers
-        LDX 1, READNUMADDR
-        LDX 2, PARSEADDR
+        ; Print "ENTER 20 NUMBERS:"
+        LDX 2, MSG1ADDR     ; Load address of MSG1
+        LDX 1, JUMPTABLEADDR
+        JSR 1, 21, 1        ; Call PRINTSTR
 
-        ; Step 1a. Read first number
-        JSR 1, 0
-        STR 0, 0, RESULT
+        ; Initialize counter to 20
+        LDR 0, 0, ZERO
+        AIR 0, 20           ; R0 = 20
+        STR 0, 0, COUNTER   ; COUNTER = 20. Alternatively you can modify the counter in the AIR line.
+
+        ; Load subroutine addresses into index registers
+        LDX 1, JUMPTABLEADDR      ;load in the readnum subroutine to get numbers from console
+        LDX 2, ARRAYADDR          ;load in the array to store numbers in
+        LDX 3, HIGHMEMADDR
+
+READLOOP:
+        JSR 1, 0, 1         ; Call READNUM
+
         LDR 0, 0, RESULT
-        JSR 2, 0
-        STR 0, 0, NUM1
+        STR 0, 2, 0         ; Store at X2+0
+
+        ; Echo the number by parsing and printing it
+        JSR 1, 1, 1
+
+        ; Increment X2
+        STX 2, TEMP
+        LDR 0, 0, TEMP
+        AIR 0, 1
+        STR 0, 0, TEMP
+        LDX 2, TEMP
+
+        ; Decrement and check counter
+        LDR 0, 0, COUNTER
+        SIR 0, 1
+        STR 0, 0, COUNTER
+        JZ 0, 1, 13, 1      ; If 0, jump to READGUESS
+
+        JMA 1, 12, 1        ; Jump to READLOOP
+
+READGUESS:
+        ; Print "ENTER A GUESS:"
+        LDX 2, MSG2ADDR     ; Load address of MSG2
+        LDX 1, JUMPTABLEADDR
+        JSR 1, 21, 1        ; Call PRINTSTR
 
         ; Step 1b. Read guess number
-        JSR 1, 0
-        STR 0, 0, RESULT
+        JSR 1, 0, 1                ;this is jumping to READNUMADDR
         LDR 0, 0, RESULT
-        JSR 2, 0
-        STR 0, 0, GUESS
 
-        ; Step 2. Print results for testing
-        LDR 1, 0, NUM1
-        OUT 1, 1
+        STR 0, 3, 0             ; Store at X3+0 (GUESS)
 
-        LDR 1, 0, GUESS
-        OUT 1, 1
+; compare num array to guess and print out difference
+FINDCLOSEST:
+        ; Initialize for search
+        LDR 0, 0, MAXVAL        ; R0 = 32767 (max possible diff)
+        STR 0, 0, MINDIFF       ; MINDIFF = 32767
+
+        LDR 0, 0, ZERO
+        STR 0, 0, CLOSEST       ; CLOSEST = 0 (will be updated)
+        AIR 0, 20               ; R0 = 20
+        STR 0, 0, COUNTER       ; COUNTER = 20
+
+        LDX 2, ARRAYADDR        ; Reset X2 to start of array
+        LDX 3, HIGHMEMADDR      ; X3 for GUESS/DIFF/temp
+
+COMPARELOOP:
+        ; Load current array element
+        LDR 0, 2, 0             ; R0 = current number
+
+        ; Calculate difference: NUM - GUESS
+        SMR 0, 3, 0             ; R0 = NUM - GUESS
+        STR 0, 3, 1             ; Store DIFF at X3+1 (temp)
+
+        ; Get absolute value
+        JGE 0, 1, 7, 1          ; Jump to POSITIVE if >= 0
+        NOT 0
+        AIR 0, 1
+
+POSITIVE:
+        STR 0, 0, TEMP          ; Save current diff to TEMP
+
+        ; Compare: is current_diff < MINDIFF?
+        LDR 1, 0, MINDIFF       ; R1 = MINDIFF
+        SMR 1, 0, TEMP          ; R1 = MINDIFF - current_diff
+
+        ; If R1 < 0, then current_diff > MINDIFF (current is WORSE)
+        ; We want to skip update when current is worse
+        ; So: if R1 >= 0, current IS better, so DON'T skip
+
+        ; Use JGE inverted: if NOT >= 0, skip update
+        JGE 1, 1, 18, 1             ; If R1 >= 0, update (current is closer)
+        JMA 1, 14, 1                ; Else skip to INCREMENT_GUESS
+
+UPDATE_CLOSEST:
+        LDR 0, 0, TEMP          ; R0 = current diff
+        STR 0, 0, MINDIFF       ; MINDIFF = current diff
+
+        LDR 0, 2, 0             ; R0 = current array number
+        STR 0, 0, CLOSEST       ; CLOSEST = current number
+        ; Fall through to INCREMENT_GUESS
+
+INCREMENT_GUESS:
+        ; Move to next array element
+        STX 2, TEMP
+        LDR 0, 0, TEMP
+        AIR 0, 1
+        STR 0, 0, TEMP
+        LDX 2, TEMP
+
+        ; Decrement counter and loop
+        LDR 0, 0, COUNTER
+        SIR 0, 1
+        STR 0, 0, COUNTER
+        JZ 0, 1, 16, 1          ; If 0, jump to PRINTRESULT
+        JMA 1, 17, 1            ; Jump back to COMPARELOOP
+
+PRINTRESULT:
+        ; Print the closest number
+        LDR 0, 0, CLOSEST
+        JSR 1, 1, 1             ; Call PARSE
 
         HLT
 
-;--------------------------------------------------------------------------------
+; -------------------------coroutines------------------------------
+;
+
 ; READNUM: Read multiline number terminated by period
-;--------------------------------------------------------------------------------
 READNUM:
-        LDR 0, 0, ZERO
-        STR 0, 0, NUMVAL
+        ;index register temp store
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+        STX 3, TEMPX3
+
+        ;start
+        LDX 1, JUMPTABLEADDR
+        LDX 3, HIGHMEMADDR
+        LDR 0, 0, ZERO          ;R0 = 0
+        STR 0, 0, NUMVAL        ;NUMVAL = 0
+        STR 0, 3, 5             ;Clear ISNEG flag at X3+5
 
         ; Fall through to RDCHAR
 
 RDCHAR:
         IN 1, 0
         ; Check for period (terminator)
-        LDR 2, 0, PERIOD
+        ;LDR 2, 0, PERIOD        ;R2 = PERIOD
+        ;TRR 1, 2                ;Set cc(4) = 1 if input = '.', otherwise 0
+        ;JCC 3, 1, 3, 1             ;jump to X1 + 3 (RDDONEADDR) if cc(4) = 1
+
+        ; Check for newline/enter (ASCII 13 or 10)
+        LDR 2, 0, TEN           ; R2 = 10 (line feed)
         TRR 1, 2
-        LDX 3, RDDONEADDR
-        JCC 3, 3, 0
+        JCC 3, 1, 3, 1          ; Jump to RDDONE if line feed
 
-        ; echo if not terminator
-        OUT 1, 1
+        ; Also check for carriage return (ASCII 13)
+        LDR 2, 0, ZERO
+        AIR 2, 13               ; R2 = 13 (carriage return)
+        TRR 1, 2
+        JCC 3, 1, 3, 1          ; Jump to RDDONE if carriage return
 
+        ; Check if number is negative
+        STR 1, 0, TEMP          ; Save input to memory
+        LDR 2, 0, TEMP          ; R2 = input (copy via memory)
+        SMR 2, 0, MINUS         ;subtract MINUS from input to check for 0 in JNE
+        JNE 2, 1, 8, 1             ;jump to ASCII_TO_DIGIT_ADDR if NOT minus
 
+        ;handle minus
+        LDR 0, 0, ONE           ;R0 = 1
+        STR 0, 3, 5             ;Store 1 at X3+5 (ISNEG flag)
+        JMA 1, 2, 1                ;jump to RDCHARADDR (JUMPTABLE + 2)
 
+ASCII_TO_DIGIT:
         ; Convert ASCII to digit
         LDR 2, 0, DIGIT0
-        SMR 1, 0, DIGIT0
-        STR 1, 0, DIGIT
+        SMR 1, 0, DIGIT0        ;subtract 48 (ASCII '0') from input to get digit
+        LDX 3, HIGHMEMADDR
+        STR 1, 3, 2             ;store at X3+2 (DIGIT)
 
         ; Multiply NUMVAL by 10
         LDR 0, 0, NUMVAL
         LDR 2, 0, NUMVAL
 
-        SRC 0, 3, 1, 1           ; times 8
-        STR 0, 0, TIMES8
+        SRC 0, 3, 1, 1           ; times 8 (shift left 3)
+        STR 0, 3, 3              ; store at X3+3 (TIMES8)
 
-        SRC 2, 1, 1, 1           ; times 2
-        STR 2, 0, TIMES2
+        SRC 2, 1, 1, 1           ; times 2 (shift left 1)
+        STR 2, 3, 4              ; store R2 at X3+3 (TIMES2)
 
-        LDR 0, 0, TIMES8
-        AMR 0, 0, TIMES2
-        AMR 0, 0, DIGIT
+        LDR 0, 3, 3              ; load R0 = TIMES8 (X3+3)
+
+        ; add: R0 + TIMES2 (X3+4) into R0
+        AMR 0, 3, 4
+        ; add: R0 + DIGIT (X3 + 2) into R0
+        AMR 0, 3, 2
 
         STR 0, 0, NUMVAL
 
-        ; Loop back to RDCHAR
-        LDX 3, RDCHARADDR
-        JMA 3, 0
+        ; Loop back to RDCHAR (JUMPTABLE + 2)
+        JMA 1, 2, 1
 
 RDDONE:
         LDR 0, 0, NUMVAL
+
+        LDR 1, 3, 5             ; Load ISNEG flag from X3+5
+        JZ 1, 1, 9, 1              ; If flag is 0, skip negation
+        NOT 0                   ; Flip all bits
+        AIR 0, 1                ; Add 1 to complete two's complement
+STORENUMBER:
+        STR 0, 0, RESULT ;store answer in temp result value
+
+        ;reload index register temp store
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+        LDX 3, TEMPX3
+
+        ;exit
         RFS 0
 
-;--------------------------------------------------------------------------------
 ; PARSE: Parse and print number (-999 to 999)
 ; TODO: Extend to handle -32768 to 32767
-;--------------------------------------------------------------------------------
+; TODO: Also, PARSE is currently broken for numbers larger than 10. I think I messed up the parsing logic.
+; it prints, but it's usually like some odd ASCII character, implying it's adding a large offset.
 PARSE:
+        ;index register temp store
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+        STX 3, TEMPX3
+
+        ;load index registers
+        LDX 1, JUMPTABLEADDR
+        LDX 3, HIGHMEMADDR
+
         ; Check if number is 0
-        LDR 1, 0, ZERO
-        TRR 0, 1
-        JZ 0, 3, 0
+        JZ 0, 1, 5, 1          ; Jump to PR1 if R0 = 0
 
         ; Check if number is positive
-        LDR 1, 0, ZERO
-        LDX 3, POSITADDR
-        JGE 0, 3, 0
+        JGE 0, 1, 4, 1         ; Jump to POSIT if R0 >= 0
 
         ; Print minus sign
         LDR 1, 0, MINUS
@@ -154,42 +385,100 @@ POSIT:
 
         ; Extract ones digit
         DVD 0, 2
-        STR 1, 0, DIG0
-
-        ; Check if done (1 digit)
-        LDR 1, 0, ZERO
-        TRR 0, 1
-        LDX 3, PR1ADDR
-        JZ 0, 3, 0
+        STR 1, 3, 2          ; Store DIG0 at X3+2
+        JZ 0, 1, 5, 1        ; If quotient = 0, only 1 digit → PR1
 
         ; Extract tens digit
         DVD 0, 2
-        STR 1, 0, DIG1
+        STR 1, 3, 3          ; Store DIG1 at X3+3
+        JZ 0, 1, 6, 1        ; If quotient = 0, only 2 digits → PR2
 
-        ; Check if done (2 digits)
-        LDR 1, 0, ZERO
-        TRR 0, 1
-        LDX 3, PR2ADDR
-        JZ 0, 3, 0
+        ; Extract hundreds digit
+        DVD 0, 2
+        STR 1, 3, 4          ; Store DIG2 at X3+4
+        JZ 0, 1, 10, 1        ; If quotient = 0, only 3 digits → PR3
 
-        ; Store hundreds digit
-        STR 0, 0, DIG2
+        ; Extract thousands digit
+        DVD 0, 2
+        STR 1, 3, 5          ; Store DIG3 at X3+5
+        JZ 0, 1, 11, 1        ; If quotient = 0, only 4 digits → PR4
 
+        ; If we get here, we have 5 digits (ten-thousands)
+        ; R0 has the ten-thousands digit, R1 has thousands remainder
+        STR 0, 3, 6          ; Store DIG4 at X3+6
+
+        ; Print ten-thousands
+        LDR 1, 3, 6
+        AMR 1, 0, DIGIT0
+        OUT 1, 1
+
+PR4:
+        ; Print thousands
+        LDR 1, 3, 5
+        AMR 1, 0, DIGIT0
+        OUT 1, 1
+
+PR3:
         ; Print hundreds
-        LDR 1, 0, DIG2
+        LDR 1, 3, 4
         AMR 1, 0, DIGIT0
         OUT 1, 1
 
 PR2:
         ; Print tens
-        LDR 1, 0, DIG1
+        LDR 1, 3, 3
         AMR 1, 0, DIGIT0
         OUT 1, 1
 
 PR1:
         ; Print ones
-        LDR 1, 0, DIG0
+        LDR 1, 3, 2
         AMR 1, 0, DIGIT0
         OUT 1, 1
+
+        ; Print newline
+        LDR 1, 0, ZERO
+        AIR 1, 10             ; ← R1 = 10 (newline char)
+        OUT 1, 1
+
+        ;reload index register temp store
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+        LDX 3, TEMPX3
+
+        RFS 0
+
+; PRINTSTR: Print null-terminated string
+; Input: X2 should point to start of string
+PRINTSTR:
+        ; Save registers
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+        STX 3, TEMPX3
+
+        LDX 1, JUMPTABLEADDR
+
+PRINTLOOP:
+        LDR 0, 2, 0         ; Load character
+        JZ 0, 1, 19, 1      ; If 0, done (jump to PRINTDONE)
+
+        ; Print character
+        OUT 0, 1            ; Output to console
+
+        ; Increment string pointer
+        STX 2, TEMP
+        LDR 0, 0, TEMP
+        AIR 0, 1
+        STR 0, 0, TEMP
+        LDX 2, TEMP
+
+        ; Loop
+        JMA 1, 20, 1        ; Jump to PRINTLOOP
+
+PRINTDONE:
+        ; Restore registers
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+        LDX 3, TEMPX3
 
         RFS 0
