@@ -28,7 +28,7 @@ public class ComputerSimulatorGUI extends JFrame {
         computer.setGUI(this);
         setupUI();
         loadFileField.setText("data/load.txt");
-        cardReaderFileField.setText("data/input.txt");
+        cardReaderFileField.setText("data/card.txt");
         updateDisplay();
     }
 
@@ -325,12 +325,12 @@ public class ComputerSimulatorGUI extends JFrame {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panel.setOpaque(false);
         panel.add(new JLabel("Program File"));
-        loadFileField = new JTextField(40);
+        loadFileField = new JTextField(15);
         panel.add(loadFileField);
 
         panel.add(Box.createHorizontalStrut(10));
         panel.add(new JLabel("Card Reader File"));
-        cardReaderFileField = new JTextField(25);
+        cardReaderFileField = new JTextField(15);
         panel.add(cardReaderFileField);
         return panel;
     }
