@@ -37,9 +37,33 @@
         TEMPX2:       Data 0 ;use this mostly for ARRAY
         TEMPX3:       Data 0 ;use this mostly for HIGHNUM
 
+        LOC 256 ; 256-1023 is used for saving the string. That implies the max length of the string is 511 characters.
+
 
 
 ; -------------------------coroutines------------------------------
 
 ; READ_STRING_FROM_DEVICE subroutine
-READ_STRING_FROM_DEVICE
+READ_STRING_FROM_DEVICE:
+        ;index register temp store
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+        STX 3, TEMPX3
+
+        ;subroutine here
+        ;reload index register temp store
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+        LDX 3, TEMPX3
+
+        ;exit
+        RFS 0
+
+; PRINT_STRING subroutine
+PRINT_STRING:
+
+; READ_STRING subroutine
+READ_STRING:
+
+; FIND_WORD subroutine
+FIND_WORD:
