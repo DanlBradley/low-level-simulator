@@ -19,7 +19,7 @@ To test the functionality of Program 1, follow the steps below:
 1. First determine which program you want to run. Program 1 is located at `data/program.txt`.
 2. Assemble the program selected using the following line:
 ```
-java -jar build/assembler/*.jar data/program.txt
+java -jar build/assembler/*.jar data/program_two.txt
 ```
 3. Run the simulator with the following line:
 ```

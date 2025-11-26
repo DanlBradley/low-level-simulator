@@ -1,0 +1,602 @@
+; PROGRAM 2
+; A program that reads a set of a paragraph of 6 sentences from a file into
+; memory. It prints the sentences on the console printer. It then asks the user for a word. It
+; searches the paragraph to see if it contains the word. If so, it prints out the word, the
+; sentence number, and the word number in the sentence.
+
+; Step by step how program 2 is working:
+; 1. Read 6 sentences from a file into memory using the IN instruction and DEVID = 2 (card reader) and CHK.
+;       This will be done in the READ_STRING_FROM_DEVICE subroutine.
+; 2. Print this message to the console using the PRINT_STRING subroutine.
+; 3. Prompt the user for a word using the PRINT_STRING subroutine and a pre-made message.
+; 4. Record the word entered using the READ_STRING subroutine.
+; 5. Search the paragraph for the word entered. This will be done in the FIND_WORD subroutine.
+;       Save the sentence number and word number in the sentence where the word is found.
+; 6. Finally, print out the word, sentence number, and word number in the sentence if the word is found.
+;       This can either be done in a subroutine or in the main program.
+
+; A quick not about memory layout. I will try to reserve 0-1023 for data, constants, and variables.
+; Program START begins at 1024 (octal 2000).
+; Subroutines will be above all code in the START program.
+
+; LOW MEMORY (6-31): lookup tables for subroutines etc. and some variables
+;currently at 0 out of 32 words
+        LOC 6
+        ; soubroutine jump tables
+        J_TABLE_1_ADDR: Data J_TABLE_1
+
+        ; Constants
+        ZERO:        Data 0
+        ONE:         Data 1
+        TEN:         Data 10
+        SPACE:       Data 32
+        PERIOD:      Data 46
+        DIGIT0:      Data 48
+
+        ; Variables
+        ; Memory address locations (for different variables)
+        HIGHMEM_ADDR_1: Data HIGHMEM_1
+        STRING_ARRAY_ADDR: Data STRING_ARRAY
+        PROMPT_MSG_ADDR: Data PROMPT_MSG
+        INPUT_WORD_ADDR: Data INPUT_WORD
+        FOUND_MSG_ADDR: Data FOUND_MSG
+        WORD_MSG_ADDR: Data WORD_MSG
+        NOT_FOUND_MSG_ADDR: Data NOT_FOUND_MSG
+
+        ;index register temp store - used to maintain index state after subroutine call
+        ;Note: I try to keep a "focus" for each index register. However, in the subroutines,
+        ;this will be mostly ignored since the main code index registers are stored and restored
+        ;in the subroutine.
+        TEMPX1:       Data 0 ;use this mostly for subroutines
+        TEMPX2:       Data 0 ;use this mostly for ARRAY
+        TEMPX3:       Data 0 ;use this mostly for HIGHNUM
+
+        ;high memory locations. Don't assign these directly, maintain a list of comments noting
+        ;  what each offset relates to. 32-127 is used for variables.
+        LOC 32
+        HIGHMEM_1:    Data 0
+        ; 32: HIGHMEM_1 - variables for FIND_WORD
+        ; HIGHMEM_1 + 0: SENTENCE_NUM (1-6)
+        ; HIGHMEM_1 + 1: WORD_NUM (position in sentence)
+        ; HIGHMEM_1 + 2: FOUND_FLAG (0=not found, 1=found)
+        ; HIGHMEM_1 + 3-10: temp variables for FIND_WORD
+
+        ; Messages: Each gets 32 locations. Keep in mind that the program is currently
+        ; 1536-1567: FOUND_MSG (32 locations)
+        ; 1568-1599: WORD_MSG (32 locations)
+        ; 1600-1631: NOT_FOUND_MSG (32 locations)
+        ; 1632-1663: PROMPT_MSG (32 locations)
+        ; 1664-1695: INPUT_WORD (32 locations)
+
+        LOC 1536
+FOUND_MSG:
+        Data 10         ; '\n'
+        Data 70         ; 'F'
+        Data 111        ; 'o'
+        Data 117        ; 'u'
+        Data 110        ; 'n'
+        Data 100        ; 'd'
+        Data 32         ; ' '
+        Data 105        ; 'i'
+        Data 110        ; 'n'
+        Data 32         ; ' '
+        Data 115        ; 's'
+        Data 101        ; 'e'
+        Data 110        ; 'n'
+        Data 116        ; 't'
+        Data 101        ; 'e'
+        Data 110        ; 'n'
+        Data 99         ; 'c'
+        Data 101        ; 'e'
+        Data 32         ; ' '
+        Data 0          ; null
+
+        LOC 1568
+WORD_MSG:
+        Data 44         ; ','
+        Data 32         ; ' '
+        Data 119        ; 'w'
+        Data 111        ; 'o'
+        Data 114        ; 'r'
+        Data 100        ; 'd'
+        Data 32         ; ' '
+        Data 0          ; null
+
+        LOC 1600
+NOT_FOUND_MSG:
+        Data 10         ; '\n'
+        Data 87         ; 'W'
+        Data 111        ; 'o'
+        Data 114        ; 'r'
+        Data 100        ; 'd'
+        Data 32         ; ' '
+        Data 110        ; 'n'
+        Data 111        ; 'o'
+        Data 116        ; 't'
+        Data 32         ; ' '
+        Data 102        ; 'f'
+        Data 111        ; 'o'
+        Data 117        ; 'u'
+        Data 110        ; 'n'
+        Data 100        ; 'd'
+        Data 10         ; '\n'
+        Data 0          ; null
+
+        LOC 1632
+PROMPT_MSG:
+        Data 10         ; '\n' (newline for spacing)
+        Data 69         ; 'E'
+        Data 78         ; 'N'
+        Data 84         ; 'T'
+        Data 69         ; 'E'
+        Data 82         ; 'R'
+        Data 32         ; ' '
+        Data 65         ; 'A'
+        Data 32         ; ' '
+        Data 87         ; 'W'
+        Data 79         ; 'O'
+        Data 82         ; 'R'
+        Data 68         ; 'D'
+        Data 58         ; ':'
+        Data 10         ; '\n' (newline)
+        Data 0          ; null terminator
+
+        LOC 1664
+INPUT_WORD: Data 0 ; User's search word will be stored here (32 locations available)
+
+        ;jump table locations
+        LOC 128 ; 128-255 is used for subroutine jump tables (J_TABLE_1, J_TABLE_2, J_TABLE_3, J_TABLE_4 32-words each)
+J_TABLE_1:
+        READ_STRING_FROM_DEVICE_ADDR:         Data READ_STRING_FROM_DEVICE           ;0
+        READ_CHAR_LOOP_ADDR:                  Data READ_CHAR_LOOP                    ;1
+        READ_DONE_ADDR:                       Data READ_DONE                         ;2
+
+        PRINT_STRING_ADDR:                    Data PRINT_STRING                      ;3
+        PRINT_LOOP_ADDR:                      Data PRINT_LOOP                        ;4
+        PRINT_DONE_ADDR:                      Data PRINT_DONE                        ;5
+
+        READ_STRING_ADDR:                     Data READ_STRING                       ;6
+        READ_INPUT_LOOP_ADDR:                 Data READ_INPUT_LOOP                   ;7
+        READ_INPUT_DONE_ADDR:                 Data READ_INPUT_DONE                   ;8
+
+        FIND_WORD_ADDR:                       Data FIND_WORD                         ;9
+        FIND_MAIN_LOOP_ADDR:                  Data FIND_MAIN_LOOP                    ;10
+        FIND_SKIP_SPACES_ADDR:                Data FIND_SKIP_SPACES                  ;11
+        FIND_COMPARE_WORD_ADDR:               Data FIND_COMPARE_WORD                 ;12
+        FIND_COMPARE_LOOP_ADDR:               Data FIND_COMPARE_LOOP                 ;13
+        FIND_MATCH_FOUND_ADDR:                Data FIND_MATCH_FOUND                  ;14
+        FIND_NO_MATCH_ADDR:                   Data FIND_NO_MATCH                     ;15
+        FIND_SKIP_WORD_ADDR:                  Data FIND_SKIP_WORD                    ;16
+        FIND_CHECK_DELIMITER_ADDR:            Data FIND_CHECK_DELIMITER              ;17
+        FIND_DONE_ADDR:                       Data FIND_DONE                         ;18
+        FIND_VERIFY_WORD_END_ADDR:            Data FIND_VERIFY_WORD_END              ;19
+        FIND_PERIOD_HANDLER_ADDR:             Data FIND_PERIOD_HANDLER               ;20
+        PRINT_NOT_FOUND_ADDR:                 Data PRINT_NOT_FOUND                   ;21
+
+        LOC 256 ; 256-1023 is used for saving the string. That implies the max length of the string is 767 characters.
+        STRING_ARRAY: Data 0 ;index 0 for the string. Print string by looping until you hit a null pointer.
+
+; -------------------------main program------------------------------
+; CODE SECTION: Main program and subroutines: memory range 1024-2047
+        LOC 1024 ;octal 2000
+START:
+        ;1. read 6 sentences from a file into memory using the IN instruction and DEVID = 2 (card reader).
+        LDX 1, J_TABLE_1_ADDR
+        JSR 1, 0, 1             ; Call READ_STRING_FROM_DEVICE (X1+0 with indirect)
+
+        ; 2. Print this message to the console using the PRINT_STRING subroutine.
+        LDX 1, J_TABLE_1_ADDR
+        LDX 2, STRING_ARRAY_ADDR ; X2 = pointer to string to print
+        JSR 1, 3, 1             ; Call PRINT_STRING (X1+3 with indirect)
+
+        ; 3. Prompt the user for a word using the PRINT_STRING subroutine and a pre-made message.
+        LDX 1, J_TABLE_1_ADDR
+        LDX 2, PROMPT_MSG_ADDR   ; X2 = pointer to "ENTER A WORD:\n"
+        JSR 1, 3, 1             ; Call PRINT_STRING (X1+3 with indirect)
+
+        ; 4. Record the word entered using the READ_STRING subroutine.
+        LDX 1, J_TABLE_1_ADDR
+        JSR 1, 6, 1             ; Call READ_STRING (X1+6 with indirect)
+
+        ; 5. Search the paragraph for the word. Results stored in HIGHMEM_1 (sentence_num, word_num, found_flag).
+        LDX 1, J_TABLE_1_ADDR
+        JSR 1, 9, 1             ; Call FIND_WORD (X1+9 with indirect)
+
+        ; 6. Print results (or "not found" message)
+        LDX 3, HIGHMEM_ADDR_1
+        LDR 0, 3, 2             ; R0 = found_flag (HIGHMEM+2)
+        LDX 1, J_TABLE_1_ADDR
+
+        JZ 0, 1, 21, 1          ; If found_flag == 0, jump to PRINT_NOT_FOUND (X1+21)
+
+        ; Word was found - print "Found in sentence "
+        LDX 2, FOUND_MSG_ADDR
+        JSR 1, 3, 1             ; Call PRINT_STRING
+
+        ; Print sentence number (convert to ASCII and print)
+        LDR 0, 3, 0             ; R0 = sentence_num (HIGHMEM+0)
+        AMR 0, 0, DIGIT0        ; R0 = R0 + 48 (convert to ASCII)
+        OUT 0, 1                ; Print to console
+
+        ; Print ", word "
+        LDX 2, WORD_MSG_ADDR
+        LDX 1, J_TABLE_1_ADDR
+        JSR 1, 3, 1             ; Call PRINT_STRING
+
+        ; Print word number (convert to ASCII and print)
+        LDR 0, 3, 1             ; R0 = word_num (HIGHMEM+1)
+        AMR 0, 0, DIGIT0        ; R0 = R0 + 48 (convert to ASCII)
+        OUT 0, 1                ; Print to console
+
+        ; Print newline
+        LDR 0, 0, TEN
+        OUT 0, 1
+
+        HLT
+
+PRINT_NOT_FOUND:
+        ; Print "Word not found"
+        LDX 2, NOT_FOUND_MSG_ADDR
+        LDX 1, J_TABLE_1_ADDR
+        JSR 1, 3, 1             ; Call PRINT_STRING
+        HLT
+
+; -------------------------coroutines------------------------------
+
+; READ_STRING_FROM_DEVICE subroutine
+; Reads characters from card reader (DEVID=2) into STRING_ARRAY until EOF
+; Card reader returns 0 (null character) at end of file
+READ_STRING_FROM_DEVICE:
+        ;index register temp store
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+        STX 3, TEMPX3
+
+        ;start - load jump table and string array pointer
+        LDX 1, J_TABLE_1_ADDR      ; X1 = jump table address for subroutine jumps
+        LDX 2, STRING_ARRAY_ADDR    ; X2 = STRING_ARRAY address (256)
+
+        ; Fall through to READ_CHAR_LOOP
+
+READ_CHAR_LOOP:
+        IN 1, 2                     ; Read one character from card reader (DEVID=2) into R1
+
+        ; Check for EOF (card reader returns 0 at end of file)
+        JZ 1, 1, 2, 1               ; If R1 = 0 (EOF), jump to READ_DONE (X1+2 with indirect)
+
+        ; Store character in STRING_ARRAY
+        STR 1, 2, 0                 ; Store character at X2+0
+
+        ; Increment X2 to point to next memory location
+        STX 2, TEMPX2               ; Save X2 to TEMPX2
+        LDR 0, 0, TEMPX2            ; Load X2 value into R0
+        AIR 0, 1                    ; Increment by 1
+        STR 0, 0, TEMPX2            ; Store back to TEMPX2
+        LDX 2, TEMPX2               ; Reload X2 with incremented value
+
+        ; Loop back to read next character
+        JMA 1, 1, 1                 ; Jump to READ_CHAR_LOOP (X1+1 with indirect)
+
+READ_DONE:
+        ; Store null terminator at end of string
+        LDR 0, 0, ZERO              ; R0 = 0
+        STR 0, 2, 0                 ; Store null terminator at X2+0
+
+        ;reload index register temp store
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+        LDX 3, TEMPX3
+
+        ;exit
+        RFS 0
+
+
+
+; PRINT_STRING subroutine
+; Prints null-terminated string to console printer (DEVID=1)
+; Input: X2 should point to start of string (set before calling JSR)
+PRINT_STRING:
+        ;index register temp store
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+        STX 3, TEMPX3
+
+        ;start - load jump table
+        LDX 1, J_TABLE_1_ADDR      ; X1 = jump table address for subroutine jumps
+        ; X2 already contains the string address (passed in by caller)
+
+        ; Fall through to PRINT_LOOP
+
+PRINT_LOOP:
+        LDR 0, 2, 0                 ; Load character from X2+0 into R0
+
+        ; Check for null terminator
+        JZ 0, 1, 5, 1               ; If R0 = 0 (null), jump to PRINT_DONE (X1+5 with indirect)
+
+        ; Print character to console
+        OUT 0, 1                    ; Output to console printer (DEVID=1)
+
+        ; Increment X2 to point to next character
+        STX 2, TEMPX2               ; Save X2 to TEMPX2
+        LDR 0, 0, TEMPX2            ; Load X2 value into R0
+        AIR 0, 1                    ; Increment by 1
+        STR 0, 0, TEMPX2            ; Store back to TEMPX2
+        LDX 2, TEMPX2               ; Reload X2 with incremented value
+
+        ; Loop back to print next character
+        JMA 1, 4, 1                 ; Jump to PRINT_LOOP (X1+4 with indirect)
+
+PRINT_DONE:
+        ;reload index register temp store
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+        LDX 3, TEMPX3
+
+        ;exit
+        RFS 0
+
+; READ_STRING subroutine
+; Reads characters from console (DEVID=0) into INPUT_WORD until Enter is pressed
+; Stops at newline (ASCII 10 or 13) and replaces it with null terminator
+READ_STRING:
+        ;index register temp store
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+        STX 3, TEMPX3
+
+        ;start - load jump table and input word pointer
+        LDX 1, J_TABLE_1_ADDR      ; X1 = jump table address for subroutine jumps
+        LDX 2, INPUT_WORD_ADDR      ; X2 = INPUT_WORD address (112)
+
+        ; Fall through to READ_INPUT_LOOP
+
+READ_INPUT_LOOP:
+        IN 1, 0                     ; Read one character from console (DEVID=0) into R1
+
+        ; Check for newline (line feed = 10)
+        LDR 2, 0, TEN               ; R2 = 10 (line feed)
+        TRR 1, 2                    ; Compare R1 with R2, sets CC bit 3 if equal
+        JCC 3, 1, 8, 1              ; If equal, jump to READ_INPUT_DONE (X1+8 with indirect)
+
+        ; Also check for carriage return (ASCII 13)
+        LDR 2, 0, ZERO
+        AIR 2, 13                   ; R2 = 13 (carriage return)
+        TRR 1, 2                    ; Compare R1 with R2
+        JCC 3, 1, 8, 1              ; If equal, jump to READ_INPUT_DONE
+
+        ; Store character in INPUT_WORD
+        STR 1, 2, 0                 ; Store character at X2+0
+
+        ; Increment X2 to point to next memory location
+        STX 2, TEMPX2               ; Save X2 to TEMPX2
+        LDR 0, 0, TEMPX2            ; Load X2 value into R0
+        AIR 0, 1                    ; Increment by 1
+        STR 0, 0, TEMPX2            ; Store back to TEMPX2
+        LDX 2, TEMPX2               ; Reload X2 with incremented value
+
+        ; Loop back to read next character
+        JMA 1, 7, 1                 ; Jump to READ_INPUT_LOOP (X1+7 with indirect)
+
+READ_INPUT_DONE:
+        ; Store null terminator at end of input
+        LDR 0, 0, ZERO              ; R0 = 0
+        STR 0, 2, 0                 ; Store null terminator at X2+0
+
+        ;reload index register temp store
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+        LDX 3, TEMPX3
+
+        ;exit
+        RFS 0
+
+; FIND_WORD subroutine
+; Searches STRING_ARRAY for INPUT_WORD
+; Stores results in HIGHMEM_1: sentence_num (offset 0), word_num (offset 1), found_flag (offset 2)
+; Space = new word, Period = new sentence
+FIND_WORD:
+        ;index register temp store
+        STX 1, TEMPX1
+        STX 2, TEMPX2
+        STX 3, TEMPX3
+
+        ;start - initialize variables and load pointers
+        LDX 1, J_TABLE_1_ADDR       ; X1 = jump table
+        LDX 2, STRING_ARRAY_ADDR     ; X2 = paragraph pointer
+        LDX 3, HIGHMEM_ADDR_1        ; X3 = results storage
+
+        ; Initialize: sentence_num = 1, word_num = 0, found = 0
+        LDR 0, 0, ONE
+        STR 0, 3, 0                  ; HIGHMEM+0 = sentence_num = 1
+        LDR 0, 0, ZERO
+        STR 0, 3, 1                  ; HIGHMEM+1 = word_num = 0
+        STR 0, 3, 2                  ; HIGHMEM+2 = found = 0
+
+        ; Fall through to FIND_MAIN_LOOP
+
+FIND_MAIN_LOOP:
+        ; Load current character from STRING_ARRAY
+        LDR 0, 2, 0                  ; R0 = STRING_ARRAY[X2]
+
+        ; Check for null terminator (end of paragraph)
+        JZ 0, 1, 18, 1               ; If null, jump to FIND_DONE
+
+        ; Check if space - skip spaces to find word start
+        LDR 1, 0, SPACE
+        TRR 0, 1
+        JCC 3, 1, 11, 1              ; If space, jump to FIND_SKIP_SPACES
+
+        ; Check if period - increment sentence counter
+        LDR 1, 0, PERIOD
+        TRR 0, 1
+        JCC 3, 1, 17, 1              ; If period, jump to FIND_CHECK_DELIMITER
+
+        ; Found start of a word - increment word counter
+        LDR 0, 3, 1                  ; R0 = word_num
+        AIR 0, 1                     ; word_num++
+        STR 0, 3, 1                  ; Store back
+
+        ; Compare this word with INPUT_WORD
+        JMA 1, 12, 1                 ; Jump to FIND_COMPARE_WORD
+
+FIND_SKIP_SPACES:
+        ; Increment X2 and continue
+        STX 2, TEMPX2
+        LDR 0, 0, TEMPX2
+        AIR 0, 1
+        STR 0, 0, TEMPX2
+        LDX 2, TEMPX2
+        JMA 1, 10, 1                 ; Jump back to FIND_MAIN_LOOP
+
+FIND_COMPARE_WORD:
+        ; Save current X2 position in HIGHMEM+3
+        STX 2, TEMPX2
+        LDR 0, 0, TEMPX2
+        STR 0, 3, 3                  ; HIGHMEM+3 = saved X2
+
+        ; Load INPUT_WORD pointer into temporary location
+        LDR 0, 0, INPUT_WORD_ADDR
+        STR 0, 3, 4                  ; HIGHMEM+4 = INPUT_WORD pointer
+
+        ; Fall through to FIND_COMPARE_LOOP
+
+FIND_COMPARE_LOOP:
+        ; Load char from INPUT_WORD
+        LDR 0, 3, 4                  ; R0 = INPUT_WORD pointer
+        STR 0, 0, TEMPX2
+        LDX 2, TEMPX2                ; X2 = INPUT_WORD pointer temporarily
+        LDR 1, 2, 0                  ; R1 = INPUT_WORD[pointer]
+
+        ; Restore X2 to STRING_ARRAY position
+        LDR 0, 3, 3
+        STR 0, 0, TEMPX2
+        LDX 2, TEMPX2
+
+        ; Check if INPUT_WORD ended (null terminator in R1)
+        JZ 1, 1, 19, 1               ; If R1 == 0, jump to FIND_VERIFY_WORD_END
+
+        ; INPUT_WORD not ended - compare characters
+        ; Load char from STRING_ARRAY
+        LDR 0, 2, 0                  ; R0 = STRING_ARRAY[X2]
+
+        ; Compare characters
+        TRR 0, 1                     ; Compare R0 with R1
+        JCC 3, 1, 15, 1              ; If NOT equal, jump to FIND_NO_MATCH
+
+        ; Characters match - increment both pointers
+        ; Increment STRING_ARRAY pointer (stored in HIGHMEM+3)
+        LDR 0, 3, 3
+        AIR 0, 1
+        STR 0, 3, 3
+
+        ; Increment INPUT_WORD pointer (stored in HIGHMEM+4)
+        LDR 0, 3, 4
+        AIR 0, 1
+        STR 0, 3, 4
+
+        ; Loop back to compare next character
+        JMA 1, 13, 1                 ; Jump to FIND_COMPARE_LOOP
+
+FIND_MATCH_FOUND:
+        ; Set found flag = 1
+        LDR 0, 0, ONE
+        STR 0, 3, 2                  ; HIGHMEM+2 = found = 1
+
+        ; Restore X2 from saved position
+        LDR 0, 3, 3
+        STR 0, 0, TEMPX2
+        LDX 2, TEMPX2
+
+        ; Done - jump to FIND_DONE
+        JMA 1, 18, 1
+
+FIND_NO_MATCH:
+        ; Restore X2 from saved position
+        LDR 0, 3, 3
+        STR 0, 0, TEMPX2
+        LDX 2, TEMPX2
+
+        ; Skip to end of current word
+        JMA 1, 16, 1                 ; Jump to FIND_SKIP_WORD
+
+FIND_SKIP_WORD:
+        ; Load current character
+        LDR 0, 2, 0
+
+        ; Check if space or period (word/sentence boundary)
+        LDR 1, 0, SPACE
+        TRR 0, 1
+        JCC 3, 1, 17, 1              ; If space, jump to FIND_CHECK_DELIMITER
+
+        LDR 1, 0, PERIOD
+        TRR 0, 1
+        JCC 3, 1, 17, 1              ; If period, jump to FIND_CHECK_DELIMITER
+
+        ; Not a delimiter, keep skipping
+        STX 2, TEMPX2
+        LDR 0, 0, TEMPX2
+        AIR 0, 1
+        STR 0, 0, TEMPX2
+        LDX 2, TEMPX2
+        JMA 1, 16, 1                 ; Loop back
+
+FIND_CHECK_DELIMITER:
+        ; Check if it's a period (sentence boundary)
+        LDR 0, 2, 0
+        LDR 1, 0, PERIOD
+        TRR 0, 1
+        JCC 3, 1, 20, 1              ; If equal (IS a period), jump to FIND_PERIOD_HANDLER
+
+        ; Not a period - it's a space, just increment X2 and continue
+        STX 2, TEMPX2
+        LDR 0, 0, TEMPX2
+        AIR 0, 1
+        STR 0, 0, TEMPX2
+        LDX 2, TEMPX2
+        JMA 1, 10, 1                 ; Jump back to FIND_MAIN_LOOP
+
+FIND_PERIOD_HANDLER:
+        ; It's a period - increment sentence_num, reset word_num
+        LDR 0, 3, 0                  ; R0 = sentence_num
+        AIR 0, 1                     ; sentence_num++
+        STR 0, 3, 0
+
+        LDR 0, 0, ZERO
+        STR 0, 3, 1                  ; word_num = 0
+
+        ; Increment X2 and continue
+        STX 2, TEMPX2
+        LDR 0, 0, TEMPX2
+        AIR 0, 1
+        STR 0, 0, TEMPX2
+        LDX 2, TEMPX2
+        JMA 1, 10, 1                 ; Jump back to FIND_MAIN_LOOP
+
+FIND_VERIFY_WORD_END:
+        ; INPUT_WORD ended (R1 == 0) - verify STRING_ARRAY word also ended
+        ; Load char from STRING_ARRAY at current position
+        LDR 0, 3, 3                  ; Get STRING_ARRAY position from HIGHMEM+3
+        STR 0, 0, TEMPX2
+        LDX 2, TEMPX2
+        LDR 0, 2, 0                  ; R0 = STRING_ARRAY[position]
+
+        ; Check if it's a delimiter (space, period, or null)
+        JZ 0, 1, 14, 1               ; If null, match! Jump to FIND_MATCH_FOUND
+        LDR 1, 0, SPACE
+        TRR 0, 1
+        JCC 3, 1, 14, 1              ; If space, match!
+        LDR 1, 0, PERIOD
+        TRR 0, 1
+        JCC 3, 1, 14, 1              ; If period, match!
+
+        ; Not a delimiter - no match (e.g., "cat" vs "catalog")
+        JMA 1, 15, 1                 ; Jump to FIND_NO_MATCH
+
+FIND_DONE:
+        ;reload index register temp store
+        LDX 1, TEMPX1
+        LDX 2, TEMPX2
+        LDX 3, TEMPX3
+
+        ;exit
+        RFS 0
