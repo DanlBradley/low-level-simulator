@@ -119,6 +119,8 @@ public class ComputerSimulatorGUI extends JFrame {
         printerOutput.setEditable(false);
         printerOutput.setBackground(Color.WHITE);
         printerOutput.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        printerOutput.setLineWrap(true);
+        printerOutput.setWrapStyleWord(true);
         JScrollPane printerScroll = new JScrollPane(printerOutput);
         printerScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
         printerScroll.setPreferredSize(new Dimension(380, 180));

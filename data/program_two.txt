@@ -27,11 +27,15 @@
 
         ; Constants
         ZERO:        Data 0
+        ONE:         Data 1
+        TEN:         Data 10
 
         ; Variables
         ; Memory address locations (for different variables)
         HIGHMEM_ADDR_1: Data HIGHMEM_1
         STRING_ARRAY_ADDR: Data STRING_ARRAY
+        PROMPT_MSG_ADDR: Data PROMPT_MSG
+        INPUT_WORD_ADDR: Data INPUT_WORD
 
         ;index register temp store - used to maintain index state after subroutine call
         ;Note: I try to keep a "focus" for each index register. However, in the subroutines,
@@ -45,6 +49,30 @@
         ;  what each offset relates to. 32-127 is used for variables.
         LOC 32
         HIGHMEM_1:    Data 0
+        ; 32-94: reserved for variables (sentence number, word number, etc.)
+
+        ; 96-127: prompt message and other strings
+        LOC 96
+PROMPT_MSG:
+        Data 10         ; '\n' (newline for spacing)
+        Data 69         ; 'E'
+        Data 78         ; 'N'
+        Data 84         ; 'T'
+        Data 69         ; 'E'
+        Data 82         ; 'R'
+        Data 32         ; ' '
+        Data 65         ; 'A'
+        Data 32         ; ' '
+        Data 87         ; 'W'
+        Data 79         ; 'O'
+        Data 82         ; 'R'
+        Data 68         ; 'D'
+        Data 58         ; ':'
+        Data 10         ; '\n' (newline)
+        Data 0          ; null terminator
+
+        LOC 112 ; 112-127: user input word (max 15 chars + null = 16 locations)
+INPUT_WORD: Data 0 ; User's search word will be stored here
 
         ;jump table locations
         LOC 128 ; 128-255 is used for subroutine jump tables (J_TABLE_1, J_TABLE_2, J_TABLE_3, J_TABLE_4 32-words each)
@@ -55,6 +83,9 @@ J_TABLE_1:
         PRINT_STRING_ADDR:                    Data PRINT_STRING                      ;3
         PRINT_LOOP_ADDR:                      Data PRINT_LOOP                        ;4
         PRINT_DONE_ADDR:                      Data PRINT_DONE                        ;5
+        READ_STRING_ADDR:                     Data READ_STRING                       ;6
+        READ_INPUT_LOOP_ADDR:                 Data READ_INPUT_LOOP                   ;7
+        READ_INPUT_DONE_ADDR:                 Data READ_INPUT_DONE                   ;8
 
         LOC 256 ; 256-1023 is used for saving the string. That implies the max length of the string is 767 characters.
         STRING_ARRAY: Data 0 ;index 0 for the string. Print string by looping until you hit a null pointer.
@@ -71,6 +102,15 @@ START:
         LDX 1, J_TABLE_1_ADDR
         LDX 2, STRING_ARRAY_ADDR ; X2 = pointer to string to print
         JSR 1, 3, 1             ; Call PRINT_STRING (X1+3 with indirect)
+
+        ; 3. Prompt the user for a word using the PRINT_STRING subroutine and a pre-made message.
+        LDX 1, J_TABLE_1_ADDR
+        LDX 2, PROMPT_MSG_ADDR   ; X2 = pointer to "ENTER A WORD:\n"
+        JSR 1, 3, 1             ; Call PRINT_STRING (X1+3 with indirect)
+
+        ; 4. Record the word entered using the READ_STRING subroutine.
+        LDX 1, J_TABLE_1_ADDR
+        JSR 1, 6, 1             ; Call READ_STRING (X1+6 with indirect)
 
         HLT
 
@@ -169,13 +209,52 @@ PRINT_DONE:
         RFS 0
 
 ; READ_STRING subroutine
+; Reads characters from console (DEVID=0) into INPUT_WORD until Enter is pressed
+; Stops at newline (ASCII 10 or 13) and replaces it with null terminator
 READ_STRING:
         ;index register temp store
         STX 1, TEMPX1
         STX 2, TEMPX2
         STX 3, TEMPX3
 
-        ;subroutine here
+        ;start - load jump table and input word pointer
+        LDX 1, J_TABLE_1_ADDR      ; X1 = jump table address for subroutine jumps
+        LDX 2, INPUT_WORD_ADDR      ; X2 = INPUT_WORD address (112)
+
+        ; Fall through to READ_INPUT_LOOP
+
+READ_INPUT_LOOP:
+        IN 1, 0                     ; Read one character from console (DEVID=0) into R1
+
+        ; Check for newline (line feed = 10)
+        LDR 2, 0, TEN               ; R2 = 10 (line feed)
+        TRR 1, 2                    ; Compare R1 with R2, sets CC bit 3 if equal
+        JCC 3, 1, 8, 1              ; If equal, jump to READ_INPUT_DONE (X1+8 with indirect)
+
+        ; Also check for carriage return (ASCII 13)
+        LDR 2, 0, ZERO
+        AIR 2, 13                   ; R2 = 13 (carriage return)
+        TRR 1, 2                    ; Compare R1 with R2
+        JCC 3, 1, 8, 1              ; If equal, jump to READ_INPUT_DONE
+
+        ; Store character in INPUT_WORD
+        STR 1, 2, 0                 ; Store character at X2+0
+
+        ; Increment X2 to point to next memory location
+        STX 2, TEMPX2               ; Save X2 to TEMPX2
+        LDR 0, 0, TEMPX2            ; Load X2 value into R0
+        AIR 0, 1                    ; Increment by 1
+        STR 0, 0, TEMPX2            ; Store back to TEMPX2
+        LDX 2, TEMPX2               ; Reload X2 with incremented value
+
+        ; Loop back to read next character
+        JMA 1, 7, 1                 ; Jump to READ_INPUT_LOOP (X1+7 with indirect)
+
+READ_INPUT_DONE:
+        ; Store null terminator at end of input
+        LDR 0, 0, ZERO              ; R0 = 0
+        STR 0, 2, 0                 ; Store null terminator at X2+0
+
         ;reload index register temp store
         LDX 1, TEMPX1
         LDX 2, TEMPX2
