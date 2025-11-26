@@ -54,6 +54,7 @@ public class Computer {
     //io operations
     private static final int IN =  49;
     private static final int OUT =  50;
+    private static final int CHK =  51;
 
     public Computer() {
         cpu = new CPU();
@@ -535,8 +536,12 @@ public class Computer {
                     System.out.println("OUT: Device " + address + " not implemented");
                 }
                 break;
-
-
+            case CHK:
+                //not implemented yet
+                //CHK r, DEVID
+                //Check Device Status to Register, r = 0..3
+                //c(r) <- device status
+                break;
             default:
                 System.out.println("Unknown opcode: " + opcode);
                 halted = true;
