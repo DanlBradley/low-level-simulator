@@ -1,90 +1,104 @@
-e3279e6 - Daniel Bradley, 16 minutes ago : finalized and updated documentation
-2c4a21a - Daniel Bradley, 18 hours ago : video complete
-8fbd79a - Daniel Bradley, 18 hours ago : WE'RE DONEEEEEEEEEEE
-ba8f63e - Daniel Bradley, 26 hours ago : commit logs
-3c6e525 - Daniel Bradley, 26 hours ago : program works
-45c1192 - Daniel Bradley, 2 days ago : the TJs oreo ice cream cookies and cream sandwiches sure are nice tasting
-c824e07 - Daniel Bradley, 2 days ago : im dying
-ce95dbd - Daniel Bradley, 2 days ago : somewhat working program
-668e672 - Daniel Bradley, 4 days ago : added quickstart and design notes .pdf files
-28e436c - Daniel Bradley, 4 days ago : readme
-8976d0a - Daniel Bradley, 4 days ago : commit logs
-092a235 - Daniel Bradley, 4 days ago : dan update
-545bc24 - Daniel Bradley, 5 days ago : Merge pull request #28 from DanlBradley/dylan
-f5382d2 - Daniel Bradley, 5 days ago : cache updated to use cache
-d884f2c - Daniel Bradley, 5 days ago : merged
-212c2bf - Dylan Magureyi, 6 days ago : added Printer window and Cache
-8a1030b - Dylan Magureyi, 3 weeks ago : Fixed the UI and added octal values across, with padding 6
-50fce1c - Dylan Magureyi, 3 weeks ago : Add Swing GUI for computer simulator
-835b0c2 - Dylan Magureyi, 6 days ago : added Printer window and Cache
-70b166f - Daniel Bradley, 7 days ago : Merge pull request #27 from DanlBradley/dan-instructions
-0693bb2 - Daniel Bradley, 7 days ago : instructions v1 complete - in-out incomplete
-8dfd3ea - Daniel Bradley, 8 days ago : Merge pull request #26 from DanlBradley/dan-cache
-fa7a051 - Daniel Bradley, 8 days ago : cache v1 working
-cf2c262 - Daniel Bradley, 3 weeks ago : Merge pull request #25 from DanlBradley/dan-finalize
-dc1956e - Daniel Bradley, 3 weeks ago : commit log
-2ab8db3 - Daniel Bradley, 3 weeks ago : clean up and error handling
-beee630 - Daniel Bradley, 3 weeks ago : Merge pull request #24 from kwang003/patch-2
-696a8eb - Daniel Bradley, 3 weeks ago : Merge pull request #23 from kwang003/patch-1
-c0d89e0 - kwang003, 3 weeks ago : Update ComputerSimulatorGUI.java with Comments
-5f32871 - kwang003, 3 weeks ago : Updated README.md with Part 1 (Simulators)
-c921654 - Daniel Bradley, 3 weeks ago : Merge pull request #22 from DanlBradley/dan-finalize
-81bfaed - Daniel Bradley, 3 weeks ago : added jar artifact
-cd404f3 - Daniel Bradley, 3 weeks ago : integrate assembler and add test file (ty @Dnyaneshwari Kumthekar)
-01a3d54 - Daniel Bradley, 3 weeks ago : Merge pull request #21 from DanlBradley/dylan
-2da554d - Dylan Magureyi, 3 weeks ago : Fixed the UI and added octal values across, with padding 6
-d2c73be - Dylan Magureyi, 3 weeks ago : Add Swing GUI for computer simulator
-10960f8 - Daniel Bradley, 4 weeks ago : Merge pull request #20 from DanlBradley/dan-simulator-draft
-8b1a832 - Daniel Bradley, 4 weeks ago : remove ds store and update commit log
-7e7d423 - Daniel Bradley, 4 weeks ago : Merge pull request #19 from DanlBradley/dan-simulator-draft
-eb85b47 - Daniel Bradley, 4 weeks ago : working backend - need frontend still
-33f7bad - Daniel Bradley, 4 weeks ago : works, need to add ui and dynamic startAddr
-96681cd - Daniel Bradley, 4 weeks ago : add ds store to gitignore
-8f49ad7 - Daniel Bradley, 7 weeks ago : Merge pull request #18 from DanlBradley/final-check
-2a7fee2 - danlbradley, 7 weeks ago : clean up readme
-6b365ab - Daniel Bradley, 7 weeks ago : Merge pull request #17 from DanlBradley/final-check
-46c299d - danlbradley, 7 weeks ago : commit log
-f23a4ba - Daniel Bradley, 7 weeks ago : Merge pull request #16 from DanlBradley/final-check
-2b3de5f - danlbradley, 7 weeks ago : data note
-ece57e9 - Daniel Bradley, 7 weeks ago : Merge pull request #15 from DanlBradley/final-check
-2296e17 - danlbradley, 7 weeks ago : clean up
-f709bee - danlbradley, 7 weeks ago : update
-7daf610 - Daniel Bradley, 7 weeks ago : Merge pull request #14 from DanlBradley/dylan
-799d0f2 - danlbradley, 7 weeks ago : resolve merge
-64eaa94 - danlbradley, 7 weeks ago : fix a few tests
-910a900 - Daniel Bradley, 7 weeks ago : Merge pull request #13 from DanlBradley/kevin-branch
-604f36b - danlbradley, 7 weeks ago : refactor
-3c32ef6 - danlbradley, 7 weeks ago : refactor
-753a31a - Daniel Bradley, 7 weeks ago : Merge pull request #8 from kwang003/Memory
-460c977 - dylan_panashe, 7 weeks ago : Added comprehensive EncoderTest. With sooo many test cases, maybe some unnecessary ones as well. Tried to make the outputs to be as descriptive as possible
-2e660c0 - Daniel Bradley, 7 weeks ago : Merge pull request #12 from DanlBradley/integration
-783e3c4 - danlbradley, 7 weeks ago : committing .jar file for ease of use
-caf341b - danlbradley, 7 weeks ago : fixed addressing issue
-cb366e8 - Daniel Bradley, 7 weeks ago : Merge pull request #11 from DanlBradley/integration
-7c1777c - danlbradley, 7 weeks ago : fix encoder bit parsing
-43ba507 - Daniel Bradley, 7 weeks ago : Merge pull request #10 from DanlBradley/integration
-1a90b55 - danlbradley, 7 weeks ago : clean up repo and integrate fileIO
-4ab041f - danlbradley, 7 weeks ago : Merge branch 'main' into feature/dan-ref-assembler
-dd0b229 - danlbradley, 7 weeks ago : removed out folder from version control
-95c0438 - Daniel Bradley, 7 weeks ago : Merge pull request #9 from DanlBradley/feature/dan-ref-assembler
-7552526 - danlbradley, 7 weeks ago : added assembler and updated listing/load files
-5227876 - danlbradley, 7 weeks ago : built assembler
-f164681 - kwang003, 7 weeks ago : Memory Operations 1st Commit
-0b3e24d - Dnyaneshwari Kumthekar, 7 weeks ago : I/O by Dnyaneshwari Ram Kumthekar
-a8a8b2e - danlbradley, 7 weeks ago : project complete w assembler
-4b805df - Daniel Bradley, 7 weeks ago : Merge pull request #6 from DanlBradley/feature/dan-encoder-v1
-1326861 - danlbradley, 7 weeks ago : updated from big- to little-endian formatting
-f1c2d0d - Daniel Bradley, 7 weeks ago : Merge pull request #4 from DanlBradley/feature/dan-encoder-v1
-def147c - danlbradley, 7 weeks ago : encoder v1 complete
-e6adf77 - danlbradley, 7 weeks ago : get the pumpkin mousse from TJs
-3a6ad2d - danlbradley, 7 weeks ago : sync
-0103718 - Daniel Bradley, 7 weeks ago : Merge pull request #3 from DanlBradley/dan-project-flow
-98cb653 - danlbradley, 7 weeks ago : updated overview in simulatorOverview.java
-ec5d324 - danlbradley, 7 weeks ago : Merge branch 'main' into dan-project-flow
-e4f34c3 - danlbradley, 7 weeks ago : updated over overview
-f62f987 - Daniel Bradley, 8 weeks ago : Merge pull request #2 from DanlBradley/feature/dan-simple-assembler
-f5e37e0 - danlbradley, 8 weeks ago : initial simple assembler
-49e1d99 - danlbradley, 8 weeks ago : added simple assember script
-fcb311b - Daniel Bradley, 8 weeks ago : Merge pull request #1 from DanlBradley/feature/dan-initial-commit
-c0763ed - danlbradley, 8 weeks ago : initial commit
-a463e1b - Daniel Bradley, 8 weeks ago : Initial commit
+62926b0 Daniel Bradley 6 minutes ago finished
+f270b4d Daniel Bradley 4 hours ago READ_STRING subroutine working
+630eee9 Daniel Bradley 4 hours ago PRINT_STRING subroutine working
+333b7e8 Daniel Bradley 4 hours ago READ_STRING_FROM_DEVICE subroutine working
+b735f87 Daniel Bradley 5 hours ago program 2 outline
+09f7b77 Daniel Bradley 23 hours ago edits
+6d744c6 Daniel Bradley 3 days ago card reader working
+18fe59a Daniel Bradley 3 days ago card reader file input
+8e3d572 Daniel Bradley 3 days ago outline for program_two
+a9ec40c Daniel Bradley 4 days ago Merge pull request #31 from DanlBradley/dan-instructions
+89fa7b2 Daniel Bradley 4 days ago remove .mov
+58d56c7 Daniel Bradley 3 weeks ago Merge pull request #30 from DanlBradley/dan-instructions
+faf579a Daniel Bradley 3 weeks ago final final
+e3279e6 Daniel Bradley 3 weeks ago finalized and updated documentation
+2c4a21a Daniel Bradley 3 weeks ago video complete
+8fbd79a Daniel Bradley 3 weeks ago WE'RE DONEEEEEEEEEEE
+ba8f63e Daniel Bradley 3 weeks ago commit logs
+3c6e525 Daniel Bradley 3 weeks ago program works
+45c1192 Daniel Bradley 3 weeks ago the TJs oreo ice cream cookies and cream sandwiches sure are nice tasting
+c824e07 Daniel Bradley 3 weeks ago im dying
+ce95dbd Daniel Bradley 3 weeks ago somewhat working program
+5975501 Daniel Bradley 4 weeks ago Merge pull request #29 from DanlBradley/dan-instructions
+668e672 Daniel Bradley 4 weeks ago added quickstart and design notes .pdf files
+28e436c Daniel Bradley 4 weeks ago readme
+8976d0a Daniel Bradley 4 weeks ago commit logs
+092a235 Daniel Bradley 4 weeks ago dan update
+545bc24 Daniel Bradley 4 weeks ago Merge pull request #28 from DanlBradley/dylan
+f5382d2 Daniel Bradley 4 weeks ago cache updated to use cache
+d884f2c Daniel Bradley 4 weeks ago merged
+212c2bf Dylan Magureyi 4 weeks ago added Printer window and Cache
+8a1030b Dylan Magureyi 6 weeks ago Fixed the UI and added octal values across, with padding 6
+50fce1c Dylan Magureyi 6 weeks ago Add Swing GUI for computer simulator
+835b0c2 Dylan Magureyi 4 weeks ago added Printer window and Cache
+70b166f Daniel Bradley 4 weeks ago Merge pull request #27 from DanlBradley/dan-instructions
+0693bb2 Daniel Bradley 4 weeks ago instructions v1 complete - in-out incomplete
+8dfd3ea Daniel Bradley 4 weeks ago Merge pull request #26 from DanlBradley/dan-cache
+fa7a051 Daniel Bradley 4 weeks ago cache v1 working
+cf2c262 Daniel Bradley 6 weeks ago Merge pull request #25 from DanlBradley/dan-finalize
+dc1956e Daniel Bradley 6 weeks ago commit log
+2ab8db3 Daniel Bradley 6 weeks ago clean up and error handling
+beee630 Daniel Bradley 6 weeks ago Merge pull request #24 from kwang003/patch-2
+696a8eb Daniel Bradley 6 weeks ago Merge pull request #23 from kwang003/patch-1
+c0d89e0 kwang003 6 weeks ago Update ComputerSimulatorGUI.java with Comments
+5f32871 kwang003 6 weeks ago Updated README.md with Part 1 (Simulators)
+c921654 Daniel Bradley 6 weeks ago Merge pull request #22 from DanlBradley/dan-finalize
+81bfaed Daniel Bradley 6 weeks ago added jar artifact
+cd404f3 Daniel Bradley 6 weeks ago integrate assembler and add test file (ty @Dnyaneshwari Kumthekar)
+01a3d54 Daniel Bradley 6 weeks ago Merge pull request #21 from DanlBradley/dylan
+2da554d Dylan Magureyi 6 weeks ago Fixed the UI and added octal values across, with padding 6
+d2c73be Dylan Magureyi 6 weeks ago Add Swing GUI for computer simulator
+10960f8 Daniel Bradley 7 weeks ago Merge pull request #20 from DanlBradley/dan-simulator-draft
+8b1a832 Daniel Bradley 7 weeks ago remove ds store and update commit log
+7e7d423 Daniel Bradley 7 weeks ago Merge pull request #19 from DanlBradley/dan-simulator-draft
+eb85b47 Daniel Bradley 7 weeks ago working backend - need frontend still
+33f7bad Daniel Bradley 7 weeks ago works, need to add ui and dynamic startAddr
+96681cd Daniel Bradley 7 weeks ago add ds store to gitignore
+8f49ad7 Daniel Bradley 10 weeks ago Merge pull request #18 from DanlBradley/final-check
+2a7fee2 danlbradley 10 weeks ago clean up readme
+6b365ab Daniel Bradley 10 weeks ago Merge pull request #17 from DanlBradley/final-check
+46c299d danlbradley 10 weeks ago commit log
+f23a4ba Daniel Bradley 10 weeks ago Merge pull request #16 from DanlBradley/final-check
+2b3de5f danlbradley 10 weeks ago data note
+ece57e9 Daniel Bradley 10 weeks ago Merge pull request #15 from DanlBradley/final-check
+2296e17 danlbradley 10 weeks ago clean up
+f709bee danlbradley 10 weeks ago update
+7daf610 Daniel Bradley 10 weeks ago Merge pull request #14 from DanlBradley/dylan
+799d0f2 danlbradley 10 weeks ago resolve merge
+64eaa94 danlbradley 10 weeks ago fix a few tests
+910a900 Daniel Bradley 10 weeks ago Merge pull request #13 from DanlBradley/kevin-branch
+604f36b danlbradley 10 weeks ago refactor
+3c32ef6 danlbradley 10 weeks ago refactor
+753a31a Daniel Bradley 10 weeks ago Merge pull request #8 from kwang003/Memory
+460c977 dylan_panashe 10 weeks ago Added comprehensive EncoderTest. With sooo many test cases, maybe some unnecessary ones as well. Tried to make the outputs to be as descriptive as possible
+2e660c0 Daniel Bradley 10 weeks ago Merge pull request #12 from DanlBradley/integration
+783e3c4 danlbradley 10 weeks ago committing .jar file for ease of use
+caf341b danlbradley 10 weeks ago fixed addressing issue
+cb366e8 Daniel Bradley 10 weeks ago Merge pull request #11 from DanlBradley/integration
+7c1777c danlbradley 10 weeks ago fix encoder bit parsing
+43ba507 Daniel Bradley 10 weeks ago Merge pull request #10 from DanlBradley/integration
+1a90b55 danlbradley 10 weeks ago clean up repo and integrate fileIO
+4ab041f danlbradley 10 weeks ago Merge branch 'main' into feature/dan-ref-assembler
+dd0b229 danlbradley 10 weeks ago removed out folder from version control
+95c0438 Daniel Bradley 10 weeks ago Merge pull request #9 from DanlBradley/feature/dan-ref-assembler
+7552526 danlbradley 10 weeks ago added assembler and updated listing/load files
+5227876 danlbradley 10 weeks ago built assembler
+f164681 kwang003 2 months ago Memory Operations 1st Commit
+0b3e24d Dnyaneshwari Kumthekar 2 months ago I/O by Dnyaneshwari Ram Kumthekar
+a8a8b2e danlbradley 2 months ago project complete w assembler
+4b805df Daniel Bradley 2 months ago Merge pull request #6 from DanlBradley/feature/dan-encoder-v1
+1326861 danlbradley 2 months ago updated from big- to little-endian formatting
+f1c2d0d Daniel Bradley 2 months ago Merge pull request #4 from DanlBradley/feature/dan-encoder-v1
+def147c danlbradley 2 months ago encoder v1 complete
+e6adf77 danlbradley 2 months ago get the pumpkin mousse from TJs
+3a6ad2d danlbradley 2 months ago sync
+0103718 Daniel Bradley 2 months ago Merge pull request #3 from DanlBradley/dan-project-flow
+98cb653 danlbradley 2 months ago updated overview in simulatorOverview.java
+ec5d324 danlbradley 2 months ago Merge branch 'main' into dan-project-flow
+e4f34c3 danlbradley 2 months ago updated over overview
+f62f987 Daniel Bradley 2 months ago Merge pull request #2 from DanlBradley/feature/dan-simple-assembler
+f5e37e0 danlbradley 3 months ago initial simple assembler
+49e1d99 danlbradley 3 months ago added simple assember script
+fcb311b Daniel Bradley 3 months ago Merge pull request #1 from DanlBradley/feature/dan-initial-commit
+c0763ed danlbradley 3 months ago initial commit
+a463e1b Daniel Bradley 3 months ago Initial commit

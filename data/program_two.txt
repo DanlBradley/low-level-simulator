@@ -61,7 +61,7 @@
         ; HIGHMEM_1 + 2: FOUND_FLAG (0=not found, 1=found)
         ; HIGHMEM_1 + 3-10: temp variables for FIND_WORD
 
-        ; Messages: Each gets 32 locations, well spaced out in high memory
+        ; Messages: Each gets 32 locations. Keep in mind that the program is currently
         ; 1536-1567: FOUND_MSG (32 locations)
         ; 1568-1599: WORD_MSG (32 locations)
         ; 1600-1631: NOT_FOUND_MSG (32 locations)
