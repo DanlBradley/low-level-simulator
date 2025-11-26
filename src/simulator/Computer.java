@@ -78,7 +78,6 @@ public class Computer {
             }
             cardReader = new BufferedReader(new FileReader(filename));
             System.out.println("Card reader loaded: " + filename);
-            System.out.println("File contents: " + cardReader.readLine());
         } catch (IOException e) {
             System.err.println("Error opening card reader file: " + e.getMessage());
             cardReader = null;

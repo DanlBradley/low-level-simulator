@@ -269,7 +269,7 @@ public class ComputerSimulatorGUI extends JFrame {
         JPanel octalPanel = new JPanel(new FlowLayout());
         octalPanel.setOpaque(false);
         octalPanel.add(new JLabel("OCTAL INPUT"));
-        octalInput = new JTextField("000144", 10); //start for program_one.txt
+        octalInput = new JTextField("002000", 10); //start for program_one.txt
         octalPanel.add(octalInput);
         panel.add(octalPanel);
 
