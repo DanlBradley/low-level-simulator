@@ -70,8 +70,8 @@
 
         LOC 1536
 FOUND_MSG:
-        Data 10         ; '\n'
-        Data 70         ; 'F'
+        Data 32         ; ' '
+        Data 102        ; 'f'
         Data 111        ; 'o'
         Data 117        ; 'u'
         Data 110        ; 'n'
@@ -210,8 +210,18 @@ START:
 
         JZ 0, 1, 21, 1          ; If found_flag == 0, jump to PRINT_NOT_FOUND (X1+21)
 
-        ; Word was found - print "Found in sentence "
+        ; Word was found - print newline, then word, then " found in sentence "
+        LDR 0, 0, TEN           ; R0 = newline character
+        OUT 0, 1                ; Print newline
+
+        ; Print the word from INPUT_WORD
+        LDX 2, INPUT_WORD_ADDR
+        LDX 1, J_TABLE_1_ADDR
+        JSR 1, 3, 1             ; Call PRINT_STRING
+
+        ; Print " found in sentence "
         LDX 2, FOUND_MSG_ADDR
+        LDX 1, J_TABLE_1_ADDR
         JSR 1, 3, 1             ; Call PRINT_STRING
 
         ; Print sentence number (convert to ASCII and print)
