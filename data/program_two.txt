@@ -172,6 +172,7 @@ J_TABLE_1:
         FIND_VERIFY_WORD_END_ADDR:            Data FIND_VERIFY_WORD_END              ;19
         FIND_PERIOD_HANDLER_ADDR:             Data FIND_PERIOD_HANDLER               ;20
         PRINT_NOT_FOUND_ADDR:                 Data PRINT_NOT_FOUND                   ;21
+        FIND_CHARS_MATCH_ADDR:                Data FIND_CHARS_MATCH                  ;22
 
         LOC 256 ; 256-1023 is used for saving the string. That implies the max length of the string is 767 characters.
         STRING_ARRAY: Data 0 ;index 0 for the string. Print string by looping until you hit a null pointer.
@@ -481,21 +482,10 @@ FIND_COMPARE_LOOP:
 
         ; Compare characters
         TRR 0, 1                     ; Compare R0 with R1
-        JCC 3, 1, 15, 1              ; If NOT equal, jump to FIND_NO_MATCH
+        JCC 3, 1, 22, 1              ; If equal (CC bit 3 set), jump to FIND_CHARS_MATCH
 
-        ; Characters match - increment both pointers
-        ; Increment STRING_ARRAY pointer (stored in HIGHMEM+3)
-        LDR 0, 3, 3
-        AIR 0, 1
-        STR 0, 3, 3
-
-        ; Increment INPUT_WORD pointer (stored in HIGHMEM+4)
-        LDR 0, 3, 4
-        AIR 0, 1
-        STR 0, 3, 4
-
-        ; Loop back to compare next character
-        JMA 1, 13, 1                 ; Jump to FIND_COMPARE_LOOP
+        ; Characters don't match
+        JMA 1, 15, 1                 ; Jump to FIND_NO_MATCH
 
 FIND_MATCH_FOUND:
         ; Set found flag = 1
@@ -571,6 +561,21 @@ FIND_PERIOD_HANDLER:
         STR 0, 0, TEMPX2
         LDX 2, TEMPX2
         JMA 1, 10, 1                 ; Jump back to FIND_MAIN_LOOP
+
+FIND_CHARS_MATCH:
+        ; Characters match - increment both pointers
+        ; Increment STRING_ARRAY pointer (stored in HIGHMEM+3)
+        LDR 0, 3, 3
+        AIR 0, 1
+        STR 0, 3, 3
+
+        ; Increment INPUT_WORD pointer (stored in HIGHMEM+4)
+        LDR 0, 3, 4
+        AIR 0, 1
+        STR 0, 3, 4
+
+        ; Loop back to compare next character
+        JMA 1, 13, 1                 ; Jump to FIND_COMPARE_LOOP
 
 FIND_VERIFY_WORD_END:
         ; INPUT_WORD ended (R1 == 0) - verify STRING_ARRAY word also ended
