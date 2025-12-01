@@ -1,6 +1,32 @@
 # low-level-simulator
 Repo for the CSCI 6461 Computer System Architecture Project F25 - Team 6
 
+## C6461 Simulator - Part 3
+The simulator component has been updated from part 2 to include a card reader DEVID functionality in the I/O instructions.
+In addition, data/program_two.txt has been included which follows the program two project description.
+
+To run program_two.txt, follow the quick start outlined in part 2 with the following modifications:
+1. Assemble the program using `data/program_two.txt` instead:
+```bash
+java -jar build/assembler/*.jar data/program_two.txt
+```
+2. Enter `002000` into the octal input field instead if it's not already set to that.
+3. If you wish to update the contents of the card reader, you can do so by modifying the file `data/card.txt`.
+4. Run the program with the following line:
+```
+java -jar build/simulator/*.jar
+```
+5. As with part 2: select "IPL" to load the program into memory, and select the button under "PC" to set the PC to the correct location.
+   Finally, select "Run" to execute the program.
+6. In program two, the card reader contents will be printed to the OUT display field and you will receive a prompt to enter a word.
+   Enter a word from the card reader output into the "Console Input" field and press enter. If the word you entered is in the card.txt file, 
+   the program will then print the word you typed, the sentence number it's found in, and the word number in that sentence.
+   If the word you entered is not in the card.txt file, the program will print "Word not found".
+7. A few limitations to note:
+   1. The card reader has a limitation of 767 characters. If the card reader exceeds this limit, overflow into the main program will occur.
+      This could be improved some, but not significantly because the simulator memory is 2048 words in length, and the rest of the space is mostly taken by hard-coded messages, the main prgoram, and subroutines.
+   2. program_two.txt cannot currently find words if they are more than 9 words into the sentence. This is because the word number is stored in a single address.
+      A future improvement would be to store the number, and re-use the "print_number" subroutine from program one.
 ## C6461 Simulator - Part 2
 The simulator component has been updated from part 1 to include several new compoents:
 
@@ -16,10 +42,10 @@ The "Simulator Quick Start" section below still applies to part 2, except that n
 display field, as well as a console input field to enter data through the IO stream.
 
 To test the functionality of Program 1, follow the steps below:
-1. First determine which program you want to run. Program 1 is located at `data/program.txt`.
+1. First determine which program you want to run. Program 1 is located at `data/program_one.txt`.
 2. Assemble the program selected using the following line:
 ```
-java -jar build/assembler/*.jar data/program_two.txt
+java -jar build/assembler/*.jar data/program_one.txt
 ```
 3. Run the simulator with the following line:
 ```
@@ -60,7 +86,7 @@ documentation.
 
 To run the simulator, execute the following command from the root directory:
 ```
-java -jar build/simulator/low-level-simulator.jar
+java -jar build/simulator/*.jar
 ```
 
 You will be provided a GUI with several options to interact with the simulator. Steps to operate the simulator are as 
@@ -100,7 +126,7 @@ documentation.
 
 To run the assembler, execute the following command from the root directory:
 ```
-java -jar build/assembler/*.jar data/assembly.txt data/listing.txt data/load.txt
+java -jar build/assembler/*.jar data/program_one.txt
 ```
 
 The output files will placed as suggested above in the data/ folder.
